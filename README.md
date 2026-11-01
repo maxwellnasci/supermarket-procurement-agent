@@ -1,5 +1,6 @@
 # Supermarket Procurement Agent
 
+[![CI](https://github.com/maxwellnasci/supermarket-procurement-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/maxwellnasci/supermarket-procurement-agent/actions/workflows/ci.yml)
 [![Testes](https://img.shields.io/badge/testes-36%20passando-brightgreen)](#qualidade-e-testes)
 [![Cobertura do motor](https://img.shields.io/badge/cobertura%20do%20motor-88%25-green)](#qualidade-e-testes)
 [![Ruff](https://img.shields.io/badge/ruff-0%20erros-261230?logo=ruff&logoColor=white)](https://docs.astral.sh/ruff/)
@@ -16,6 +17,7 @@ O princípio central: **o LLM explica, o código decide.** Quantidades, forneced
 
 ## Sumário
 
+- [Documentação](#documentação)
 - [Arquitetura](#arquitetura)
 - [Motor determinístico de compras](#motor-determinístico-de-compras)
 - [FinOps e desempate multicritério](#finops-e-desempate-multicritério)
@@ -25,6 +27,13 @@ O princípio central: **o LLM explica, o código decide.** Quantidades, forneced
 - [Qualidade e testes](#qualidade-e-testes)
 - [Estrutura do projeto](#estrutura-do-projeto)
 - [Roadmap](#roadmap)
+
+---
+
+## Documentação
+
+- **[Parecer executivo (PDF, 8 páginas)](docs/parecer_executivo_rede_varejo_premium.pdf)** — demonstração ponta a ponta do dossiê gerado pelo motor: diagnóstico de ruptura, FinOps de cotação, plano de contenção e termo de autorização human-in-the-loop.
+- **[ADR-0001 — Arquitetura do motor determinístico](docs/adr/0001-arquitetura-motor-deterministico.md)** — por que o código decide, como o SQLite é configurado, como o MOQ é validado e como o dossiê é sanitizado antes de chegar ao LLM.
 
 ---
 
@@ -162,7 +171,7 @@ O texto continua legível, mas não consegue mais fechar blocos, abrir instruç�
 Requer Python 3.12+ (testado em 3.14).
 
 ```bash
-git clone https://github.com/<seu-usuario>/supermarket-procurement-agent.git
+git clone https://github.com/maxwellnasci/supermarket-procurement-agent.git
 cd supermarket-procurement-agent
 
 python -m venv .venv
@@ -231,8 +240,16 @@ Os testes adversariais rodam sobre bancos SQLite isolados por teste (`tmp_path`)
 
 ```text
 supermarket-procurement-agent/
+├── .github/
+│   └── workflows/
+│       └── ci.yml                 # pytest + ruff em Python 3.12 e 3.14
 ├── data/
-│   └── retail_store.db          # banco de demonstração (SQLite, modo WAL)
+│   └── retail_store.db            # banco de demonstração (SQLite, modo WAL)
+├── docs/
+│   ├── adr/
+│   │   └── 0001-arquitetura-motor-deterministico.md
+│   ├── parecer_executivo_rede_varejo_premium.html
+│   └── parecer_executivo_rede_varejo_premium.pdf
 ├── src/
 │   ├── agent.py                   # dossiê sanitizado para o agente LLM
 │   ├── setup_database.py          # gera o banco de demonstração
@@ -240,6 +257,7 @@ supermarket-procurement-agent/
 │       └── procurement_engine.py  # motor determinístico e contratos Pydantic
 ├── tests/
 │   └── test_procurement.py        # 36 testes, incluindo adversariais
+├── LICENSE
 └── pyproject.toml                 # dependências fixadas, Ruff e pytest
 ```
 

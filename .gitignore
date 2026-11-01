@@ -17,7 +17,8 @@ venv/
 coverage.xml
 htmlcov/
 
-# Documentos com dados de clientes: nunca publicar
+# Documentos internos com dados reais: nunca publicar
+docs/private/
 
 # SQLite em modo WAL (arquivos temporários de journal)
 *.db-wal
