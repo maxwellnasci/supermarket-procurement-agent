@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Parecer Executivo de Compras e Operações — Rede Varejo Premium</title>
+<meta name="author" content="Arquitetura de Dados e IA — Rede Varejo Premium">
+<meta name="description" content="Pré-pedido determinístico do ciclo 31/10/2026: 5 itens críticos (4 em compra, 1 sem cotação), 4 fornecedores, R$ 13.793,20.">
+<meta name="keywords" content="compras, estoque, FinOps, governança de dados, human-in-the-loop">
+<style>
+  @page {
+    size: A4;
+    margin: 19mm 17mm 17mm 17mm;
+    @top-left {
+      content: "REDE VAREJO PREMIUM · LOJA CONCEITO";
+      font-family: "DejaVu Sans", sans-serif; font-size: 6.8pt;
+      letter-spacing: 1.3pt; color: #8C8577; padding-bottom: 3mm;
+    }
+    @top-right {
+      content: "PARECER EXECUTIVO · CICLO 31/10/2026";
+      font-family: "DejaVu Sans", sans-serif; font-size: 6.8pt;
+      letter-spacing: 1.1pt; color: #8C8577; padding-bottom: 3mm;
+    }
+    @bottom-left {
+      content: "Documento confidencial · uso interno";
+      font-family: "DejaVu Sans", sans-serif; font-size: 6.5pt; color: #9A9488;
+    }
+    @bottom-right {
+      content: "Página " counter(page) " de " counter(pages);
+      font-family: "DejaVu Sans", sans-serif; font-size: 6.5pt; color: #9A9488;
+    }
+  }
+  @page :first {
+    @top-left { content: ""; }
+    @top-right { content: ""; }
+  }
+
+  html { font-size: 9.4pt; }
+  body {
+    font-family: "Bitstream Charter", "Charter", serif;
+    color: #1B241F; line-height: 1.5; margin: 0;
+  }
+  p { margin: 0 0 6pt 0; text-align: justify; hyphens: auto; }
+  strong { color: #0E3B2E; }
+  em { color: #3D4A43; }
+
+  .sans { font-family: "DejaVu Sans", sans-serif; }
+  .kicker {
+    font-family: "DejaVu Sans", sans-serif; font-size: 7.4pt;
+    letter-spacing: 2pt; color: #0E3B2E; margin: 0 0 2pt 0;
+  }
+  .kicker-sub {
+    font-family: "DejaVu Sans", sans-serif; font-size: 6.6pt;
+    letter-spacing: 1.4pt; color: #9A8A6B; margin: 0 0 14pt 0;
+  }
+  h1 {
+    font-family: "DejaVu Sans", sans-serif; font-weight: bold;
+    font-size: 24pt; line-height: 1.08; letter-spacing: -0.6pt;
+    color: #0E3B2E; margin: 0 0 7pt 0;
+  }
+  .lede {
+    font-size: 10pt; line-height: 1.42; color: #4A544D;
+    margin: 0 0 10pt 0; text-align: left; max-width: 150mm;
+  }
+  .rule-gold { height: 2.4pt; background: #B08A57; width: 46mm; margin: 0 0 12pt 0; }
+
+  .meta { width: 100%; border-collapse: collapse; margin-bottom: 12pt; }
+  .meta td { vertical-align: top; padding: 3pt 8pt 3pt 0; width: 33%; }
+  .meta .lbl {
+    font-family: "DejaVu Sans", sans-serif; font-size: 6.2pt;
+    letter-spacing: 1.2pt; color: #938C7D; text-transform: uppercase;
+    display: block; margin-bottom: 1.5pt;
+  }
+  .meta .val { font-size: 8.8pt; color: #1B241F; }
+
+  .decision { width: 100%; border-collapse: collapse; margin: 0 0 14pt 0; }
+  .decision td {
+    background: #0E3B2E; color: #FFFFFF; padding: 7.5pt 8pt 7pt 8pt;
+    vertical-align: middle; border-right: 2pt solid #FDFCF9;
+  }
+  .decision td:last-child { border-right: none; }
+  .decision .lbl {
+    font-family: "DejaVu Sans", sans-serif; font-size: 6.2pt;
+    letter-spacing: 1.3pt; color: #C9BC9E; display: block; margin-bottom: 2pt;
+  }
+  .decision .big {
+    font-family: "DejaVu Sans", sans-serif; font-size: 14pt;
+    font-weight: bold; letter-spacing: -0.3pt;
+  }
+  .decision .small { font-size: 8.4pt; color: #EDE7DA; }
+
+  h2 {
+    font-family: "DejaVu Sans", sans-serif; font-size: 14pt;
+    color: #0E3B2E; margin: 0 0 3pt 0; letter-spacing: -0.2pt;
+    line-height: 1.15;
+  }
+  .sec-num {
+    font-family: "DejaVu Sans", sans-serif; font-size: 6.8pt;
+    letter-spacing: 1.6pt; color: #B08A57; text-transform: uppercase;
+    display: block; margin-bottom: 2pt;
+  }
+  .sec-head { border-bottom: 0.7pt solid #D8D0BF; padding-bottom: 4pt; margin-bottom: 8pt; break-after: avoid; }
+  .sec-head p { font-size: 8.6pt; color: #61695F; margin: 3pt 0 0 0; text-align: left; }
+  .page-break { page-break-before: always; }
+
+  h3 {
+    font-family: "DejaVu Sans", sans-serif; font-size: 10pt; break-after: avoid;
+    color: #0E3B2E; margin: 12pt 0 4pt 0; letter-spacing: -0.1pt;
+  }
+  h3 .n { color: #B08A57; margin-right: 3pt; }
+
+  ul, ol { margin: 3pt 0 7pt 0; padding-left: 13pt; }
+  li { margin-bottom: 3.2pt; text-align: justify; }
+
+  .summary { margin: 0 0 4pt 0; }
+  .sum-item { margin-bottom: 4.5pt; padding-left: 16pt; position: relative; }
+  .sum-item .idx {
+    position: absolute; left: 0; top: 0.5pt;
+    font-family: "DejaVu Sans", sans-serif; font-size: 8pt; font-weight: bold;
+    color: #B08A57;
+  }
+  .sum-item p { margin: 0; }
+  .sum-item .t {
+    font-family: "DejaVu Sans", sans-serif; font-size: 8.7pt;
+    font-weight: bold; color: #0E3B2E;
+  }
+
+  table.data { width: 96.5%; border-collapse: collapse; margin: 7pt 0 5pt 0; font-size: 8pt; table-layout: fixed; }
+  table.data thead th {
+    font-family: "DejaVu Sans", sans-serif; font-size: 6.4pt; letter-spacing: 0.7pt;
+    text-transform: uppercase; color: #0E3B2E; background: #EFEBE1;
+    padding: 5pt 4pt; text-align: left; border-bottom: 0.8pt solid #C9BFA9;
+    vertical-align: bottom;
+  }
+  table.data td {
+    padding: 3.6pt 4pt; border-bottom: 0.5pt solid #E2DBCC;
+    vertical-align: top;
+  }
+  table.data tr.alt td { background: #FAF8F3; }
+  table.data tr.total td {
+    background: #F1EDE3; font-weight: bold; border-top: 0.8pt solid #C9BFA9;
+    border-bottom: none;
+  }
+  table.data td.num, table.data th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.data td.c { text-align: center; }
+  .mono { font-family: "DejaVu Sans Mono", monospace; font-size: 7pt; }
+  .sku { font-family: "DejaVu Sans", sans-serif; font-size: 6.7pt; letter-spacing: 0.3pt; color: #6C746B; }
+  .item-name { font-size: 8.2pt; line-height: 1.25; }
+
+  .badge {
+    font-family: "DejaVu Sans", sans-serif; font-size: 5.9pt; font-weight: bold;
+    letter-spacing: 0.6pt; text-transform: uppercase; padding: 1.6pt 3.6pt;
+    border-radius: 1.5pt; white-space: nowrap;
+  }
+  .b-red { background: #F6E0DD; color: #8C1D18; }
+  .b-amber { background: #FAEFD7; color: #875000; }
+  .b-muted { background: #E9E6DD; color: #6B6558; }
+  .b-green { background: #DFEAE3; color: #0E3B2E; }
+
+  .kpis { width: 100%; border-collapse: separate; border-spacing: 5pt 0; margin: 8pt -5pt 10pt -5pt; }
+  .kpis td {
+    background: #F7F4EC; border-left: 2.2pt solid #B08A57;
+    padding: 6pt 7pt; width: 25%; vertical-align: top;
+  }
+  .kpis .k-lbl {
+    font-family: "DejaVu Sans", sans-serif; font-size: 5.9pt; letter-spacing: 0.9pt;
+    color: #7E786A; text-transform: uppercase; display: block; margin-bottom: 1pt;
+  }
+  .kpis .k-val {
+    font-family: "DejaVu Sans", sans-serif; font-size: 13.5pt; font-weight: bold;
+    color: #0E3B2E; letter-spacing: -0.4pt; display: block; line-height: 1.15;
+  }
+  .kpis .k-sub { font-size: 7pt; color: #6C746B; display: block; margin-top: 1pt; }
+
+  .callout {
+    background: #FBF5E9; border-left: 3pt solid #B08A57;
+    padding: 6pt 8pt; margin: 7pt 0; page-break-inside: avoid;
+  }
+  .callout p { margin: 0; font-size: 8.8pt; }
+  .callout .c-title {
+    font-family: "DejaVu Sans", sans-serif; font-size: 6.6pt; letter-spacing: 1.1pt;
+    text-transform: uppercase; color: #8A6B3D; display: block; margin-bottom: 2pt;
+  }
+  .callout.red { background: #FAEEEC; border-left-color: #B3261E; }
+  .callout.red .c-title { color: #8C1D18; }
+  .callout.dark { background: #0E3B2E; border-left-color: #B08A57; }
+  .callout.dark p { color: #F3EFE5; font-size: 9.2pt; }
+  .callout.dark .c-title { color: #C9BC9E; }
+  .callout.dark strong { color: #FFFFFF; }
+
+  .chart { margin: 9pt 0 4pt 0; page-break-inside: avoid; }
+  .chart-title {
+    font-family: "DejaVu Sans", sans-serif; font-size: 7.2pt; letter-spacing: 0.8pt;
+    text-transform: uppercase; color: #4A544D; margin-bottom: 4pt;
+  }
+  .legend { font-family: "DejaVu Sans", sans-serif; font-size: 6.6pt; color: #6C746B; margin-bottom: 5pt; }
+  .legend span { display: inline-block; margin-right: 12pt; }
+  .sw { display: inline-block; width: 9pt; height: 4.5pt; vertical-align: middle; margin-right: 3pt; }
+  .bar-line { margin-bottom: 5.5pt; }
+  .bar-lab {
+    font-family: "DejaVu Sans", sans-serif; font-size: 7pt; color: #2B352F;
+    width: 40mm; display: inline-block; vertical-align: middle;
+  }
+  .bar-lab .sub { color: #8A8375; font-size: 6.3pt; display: block; }
+  .bar-track {
+    display: inline-block; width: 92mm; height: 7pt; background: #EFEBE1;
+    position: relative; vertical-align: middle; margin: 0 5pt;
+  }
+  .bar-lead {
+    position: absolute; left: 0; top: 0; height: 7pt; background: #DAD3C3;
+  }
+  .bar-cover {
+    position: absolute; left: 0; top: 0; height: 7pt; background: #B3261E;
+  }
+  .bar-tick {
+    position: absolute; top: -1.5pt; height: 10pt; width: 0.9pt; background: #0E3B2E;
+  }
+  .bar-val {
+    font-family: "DejaVu Sans", sans-serif; font-size: 6.8pt; color: #8C1D18;
+    display: inline-block; vertical-align: middle;
+  }
+
+  .stack { width: 100%; border-collapse: collapse; margin: 5pt 0 2pt 0; }
+  .stack td { height: 10pt; padding: 0; border: none; }
+  .stack-lbl { font-family: "DejaVu Sans", sans-serif; font-size: 6.4pt; color: #6C746B; padding-top: 3pt !important; }
+
+  .two-col { width: 100%; border-collapse: collapse; }
+  .two-col td { width: 50%; vertical-align: top; padding-right: 10pt; }
+  .two-col li { font-size: 8.7pt; line-height: 1.38; margin-bottom: 2.5pt; }
+  .two-col td:last-child { padding-right: 0; padding-left: 10pt; }
+
+  .sig { margin-top: 10pt; page-break-inside: avoid; }
+  .sig table { width: 100%; border-collapse: collapse; }
+  .sig td { width: 50%; padding: 18pt 10pt 2pt 0; vertical-align: bottom; }
+  .sig .line { border-top: 0.7pt solid #5C665E; padding-top: 3pt; font-size: 7.8pt; }
+  .sig .role { font-family: "DejaVu Sans", sans-serif; font-size: 6.4pt; color: #7E786A; text-transform: uppercase; letter-spacing: 0.8pt; }
+
+  .approve {
+    border: 0.9pt solid #0E3B2E; padding: 9pt 10pt; margin: 10pt 0;
+    page-break-inside: avoid; background: #FDFCF9;
+  }
+  .approve .t {
+    font-family: "DejaVu Sans", sans-serif; font-size: 8.4pt; font-weight: bold;
+    color: #0E3B2E; letter-spacing: 0.2pt; margin-bottom: 4pt;
+  }
+  .chk { font-family: "DejaVu Sans", sans-serif; font-size: 7.8pt; margin: 2.5pt 0; }
+  .chk .box {
+    display: inline-block; width: 8pt; height: 8pt; border: 0.7pt solid #5C665E;
+    margin-right: 4pt; vertical-align: -1pt;
+  }
+
+  .note { font-size: 7.2pt; color: #6C746B; line-height: 1.4; margin-top: 3pt; }
+  .footnote { font-size: 7.2pt; color: #6C746B; line-height: 1.4; }
+  .footnote strong { color: #4A544D; }
+
+  .tag { font-family: "DejaVu Sans", sans-serif; font-size: 6.2pt; letter-spacing: 0.8pt; color: #B08A57; text-transform: uppercase; }
+  .divider { border-top: 0.5pt solid #E2DBCC; margin: 10pt 0; }
+</style>
+</head>
+<body>
+
+<!-- ============================== CAPA / SUMÁRIO ============================== -->
+<div class="kicker">REDE VAREJO PREMIUM · LOJA CONCEITO</div>
+<div class="kicker-sub">GOVERNANÇA DE DADOS &amp; INTELIGÊNCIA ARTIFICIAL · PARECER Nº 2026-10-31-RVP</div>
+
+<h1>Parecer Executivo de<br>Compras e Operações</h1>
+<div class="rule-gold"></div>
+<p class="lede">Pré-pedido determinístico do ciclo de 31/10/2026: quatro SKUs em ruptura iminente e um bloqueado por falta de cotação, quatro fornecedores e <strong>R$ 13.793,20</strong> a autorizar. A reposição chega <em>depois</em> da ruptura — a decisão desta noite define o fim de semana e a semana seguinte.</p>
+
+<table class="meta">
+  <tr>
+    <td><span class="lbl">Para</span><span class="val">Gerente de Compras<br>Diretor da Loja Conceito</span></td>
+    <td><span class="lbl">De</span><span class="val">Arquitetura de Dados &amp; IA<br>Governança de Compras</span></td>
+    <td><span class="lbl">Emissão</span><span class="val">31/10/2026 · 19h45 (BRT)<br>Versão 1.0</span></td>
+  </tr>
+  <tr>
+    <td><span class="lbl">Assunto</span><span class="val">Autorização de pré-pedido e plano de contenção</span></td>
+    <td><span class="lbl">Fonte</span><span class="val">Camada de governança (SQLite + motor determinístico)</span></td>
+    <td><span class="lbl">Classificação</span><span class="val">Confidencial · uso interno</span></td>
+  </tr>
+</table>
+
+<table class="decision">
+  <tr>
+    <td style="width:30%">
+      <span class="lbl">Valor consolidado</span>
+      <span class="big">R$ 13.793,20</span>
+      <span class="small"><br>4 fornecedores · 4 POs</span>
+    </td>
+    <td style="width:24%">
+      <span class="lbl">Itens críticos</span>
+      <span class="big">5 de 7</span>
+      <span class="small"><br>4 em compra<br>1 sem cotação*</span>
+    </td>
+    <td style="width:22%">
+      <span class="lbl">Cobertura mínima</span>
+      <span class="big">0,7 dia</span>
+      <span class="small"><br>pão sem glúten · entrega D+2</span>
+    </td>
+    <td style="width:24%">
+      <span class="lbl">Decisão até</span>
+      <span class="big">20h30</span>
+      <span class="small"><br>hoje, 31/10 · antes do feriado</span>
+    </td>
+  </tr>
+</table>
+
+<div class="sec-head" style="border-bottom:none; margin-bottom:5pt;">
+  <span class="sec-num">01 · Sumário executivo</span>
+  <h2>A loja entra no feriado com estoque de um dia</h2>
+</div>
+
+<div class="summary">
+  <div class="sum-item"><span class="idx">01</span><p><span class="t">Quatro SKUs rompem antes de qualquer entrega possível.</span> A cobertura (0,7 a 1,6 dia) é menor que o prazo de cada fornecedor (1 a 3 dias) — a aritmética do estoque contra o calendário.</p></div>
+  <div class="sum-item"><span class="idx">02</span><p><span class="t">O feriado de Finados (02/11) agrava o quadro.</span> Sem operação logística na segunda, a primeira entrega cai em 04/11. O fim de semana prolongado é exatamente o período descoberto.</p></div>
+  <div class="sum-item"><span class="idx">03</span><p><span class="t">O quinto item crítico está bloqueado, não invisível.</span> O Ancho Wagyu (SKU-CAR-002) não tem cotação e volta como pendência explícita; <strong>os R$ 13.793,20 não incluem essa reposição.</strong></p></div>
+  <div class="sum-item"><span class="idx">04</span><p><span class="t">A cotação escolheu o menor preço em 3 dos 4 itens com concorrência.</span> São <strong>R$ 1.237,00 de economia</strong> (8,2%), com uma ressalva de prazo no azeite.</p></div>
+  <div class="sum-item"><span class="idx">05</span><p><span class="t">O custo de não decidir supera o pedido.</span> Exposição de <strong>R$ 4,5 mil a R$ 7,5 mil</strong> em faturamento e risco de migração de clientes A/B.</p></div>
+</div>
+
+<div class="callout dark">
+  <span class="c-title">Decisão recomendada</span>
+  <p><strong>Autorizar integralmente as 4 POs (R$ 13.793,20)</strong> e liberar alçada de contingência de <strong>R$ 1.500,00</strong> para cotação emergencial do Ancho, compra de salvamento e transferência entre lojas. O pedido garante a semana; a contingência protege o domingo.</p>
+</div>
+
+<p class="footnote">*Cinco dos sete SKUs analisados estão abaixo do mínimo. O quinto (SKU-CAR-002) não tem cotação e é tratado na seção 6.</p>
+
+<!-- ============================== 02 DIAGNÓSTICO ============================== -->
+<div class="page-break"></div>
+<div class="sec-head">
+  <span class="sec-num">02 · Diagnóstico</span>
+  <h2>O que a auditoria encontrou</h2>
+  <p>Sete SKUs monitorados · cinco abaixo do mínimo · quatro com cotação e cobertura insuficiente · um bloqueado por falta de cotação.</p>
+</div>
+
+<table class="data">
+  <thead>
+    <tr>
+      <th style="width:32%">Item</th>
+      <th class="num" style="width:13%">Estoque/mín.</th>
+      <th class="num" style="width:11%">Cobertura</th>
+      <th class="num" style="width:14%">Déficit</th>
+      <th class="num" style="width:10%">Valor (R$)</th>
+      <th style="width:10%">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="sku">SKU-PAD-001</span><br><span class="item-name">Pão Sem Glúten 400g</span></td>
+      <td class="num">4 / 15 un</td>
+      <td class="num"><strong>0,7 vs 2 d</strong></td>
+      <td class="num">20 un</td><td class="num">475,20</td>
+      <td><span class="badge b-red">Ruptura</span></td>
+    </tr>
+    <tr class="alt">
+      <td><span class="sku">SKU-CAR-001</span><br><span class="item-name">Picanha Angus</span></td>
+      <td class="num">12 / 40 kg</td>
+      <td class="num"><strong>0,8 vs 1 d</strong></td>
+      <td class="num">33 kg</td><td class="num">6.556,00</td>
+      <td><span class="badge b-red">Ruptura</span></td>
+    </tr>
+    <tr>
+      <td><span class="sku">SKU-VIN-001</span><br><span class="item-name">Vinho Angelica 750ml</span></td>
+      <td class="num">3 / 10 un</td>
+      <td class="num"><strong>1,2 vs 2 d</strong></td>
+      <td class="num">7 un</td><td class="num">4.995,00</td>
+      <td><span class="badge b-red">Ruptura</span></td>
+    </tr>
+    <tr class="alt">
+      <td><span class="sku">SKU-MER-002</span><br><span class="item-name">Azeite Extra Virgem</span></td>
+      <td class="num">8 / 25 un</td>
+      <td class="num"><strong>1,6 vs 3 d</strong></td>
+      <td class="num">17 un</td><td class="num">1.767,00</td>
+      <td><span class="badge b-red">Ruptura</span></td>
+    </tr>
+    <tr>
+      <td><span class="sku">SKU-CAR-002</span><br><span class="item-name">Ancho Wagyu 400g</span></td>
+      <td class="num">5 / 8 un</td>
+      <td class="num">2,8 d</td>
+      <td class="num">—</td><td class="num">a cotar</td>
+      <td><span class="badge b-amber">A cotar</span></td>
+    </tr>
+    <tr class="alt">
+      <td><span class="sku">SKU-VIN-002</span><br><span class="item-name">Casillero Diablo</span></td>
+      <td class="num">45 / 20 un</td>
+      <td class="num">11,3 d</td>
+      <td class="num">—</td><td class="num">—</td>
+      <td><span class="badge b-green">OK</span></td>
+    </tr>
+    <tr>
+      <td><span class="sku">SKU-MER-001</span><br><span class="item-name">Arroz Tipo 1 · 5kg</span></td>
+      <td class="num">120 / 50 pc</td>
+      <td class="num">10,0 d</td>
+      <td class="num">—</td><td class="num">—</td>
+      <td><span class="badge b-green">OK</span></td>
+    </tr>
+  </tbody>
+</table>
+<p style="text-align:right; font-family:'DejaVu Sans',sans-serif; font-size:8.4pt; color:#0E3B2E; margin:2pt 0 3pt 0;">4 SKUs no pré-pedido &nbsp;·&nbsp; <strong>R$ 13.793,20</strong></p>
+<p class="footnote">Déficit calculado sobre a janela conservadora (feriado de Finados): demanda diária × dias até a primeira entrega possível, descontado o estoque atual. Para o SKU-CAR-002 não há cotação cadastrada, logo não há valor nem prazo.</p>
+
+<div class="chart">
+  <div class="chart-title">Cobertura de estoque × prazo de entrega (dias)</div>
+  <div class="legend">
+    <span><span class="sw" style="background:#B3261E"></span>Cobertura atual</span>
+    <span><span class="sw" style="background:#DAD3C3"></span>Prazo do fornecedor</span>
+  </div>
+
+  <div class="bar-line">
+    <div class="bar-lab">Pão sem glúten<span class="sub">BioPan · 2 dias</span></div>
+    <div class="bar-track"><div class="bar-lead" style="width:66.7%"></div><div class="bar-cover" style="width:23.3%"></div></div>
+    <div class="bar-val">0,7 vs 2 d</div>
+  </div>
+  <div class="bar-line">
+    <div class="bar-lab">Picanha Angus<span class="sub">Carnes Nobres · 1 dia</span></div>
+    <div class="bar-track"><div class="bar-lead" style="width:33.3%"></div><div class="bar-cover" style="width:26.7%"></div></div>
+    <div class="bar-val">0,8 vs 1 d</div>
+  </div>
+  <div class="bar-line">
+    <div class="bar-lab">Vinho Malbec<span class="sub">Vinhos Nobres · 2 dias</span></div>
+    <div class="bar-track"><div class="bar-lead" style="width:66.7%"></div><div class="bar-cover" style="width:40%"></div></div>
+    <div class="bar-val">1,2 vs 2 d</div>
+  </div>
+  <div class="bar-line">
+    <div class="bar-lab">Azeite português<span class="sub">Central Alimentos · 3 dias</span></div>
+    <div class="bar-track"><div class="bar-lead" style="width:100%"></div><div class="bar-cover" style="width:53.3%"></div></div>
+    <div class="bar-val">1,6 vs 3 d</div>
+  </div>
+</div>
+
+<h3><span class="n">2.1</span> Três leituras que importam</h3>
+<p><strong>O problema é estrutural, não pontual.</strong> 71% do mix monitorado está abaixo do mínimo. Quatro itens chegam ao relatório já sem margem de segurança — ou seja, o ponto de reposição está sendo acionado tarde, quando o estoque já não cobre o prazo de entrega. O estoque mínimo atual funciona como piso contábil, não como ponto de pedido.</p>
+<p><strong>O capital está concentrado em um único SKU.</strong> A picanha responde por 47,5% do valor do pedido (R$ 6.556,00). Isso é coerente com o giro, mas concentra o risco: qualquer falha do Frigorífico Carnes Nobres compromete metade do plano.</p>
+<p><strong>Não há folga para o feriado.</strong> A cobertura foi calculada com a média diária plana. Em fim de semana prolongado, a venda de picanha e de itens de padaria tende a ficar acima da média; se o fim de semana vender 1,5× a média, a cobertura real da picanha cai para cerca de <strong>0,5 dia</strong> — menos de meio dia de operação.</p>
+
+<div class="callout red">
+  <span class="c-title">Conclusão do diagnóstico</span>
+  <p>A loja não está comprando “um pouco tarde”. Está comprando <strong>depois</strong> do ponto em que a reposição conseguiria chegar antes da falta. O pedido resolve a semana seguinte; o fim de semana precisa de contenção operacional.</p>
+</div>
+
+<!-- ============================== 03 FIM DE SEMANA ============================== -->
+
+<div class="sec-head">
+  <span class="sec-num">03 · Alerta crítico</span>
+  <h2>Por que a ruptura atinge clientes A/B no na região da loja</h2>
+  <p>Dois itens, dois mecanismos de perda: um de restrição alimentar, outro de compra de destino. Ambos com custo desproporcional ao valor de gôndola.</p>
+</div>
+
+<h3><span class="n">3.1</span> Pão sem glúten: a ruptura de um item de restrição, não de preferência</h3>
+<p>O cliente celíaco ou intolerante ao glúten não substitui o pão por outro produto da mesma categoria. A alternativa real é <em>outra loja</em>. Com 4 unidades em gôndola, a padaria atende cerca de quatro clientes e para — provavelmente antes do fim da manhã de domingo. O SKU representa apenas 3,4% do valor do pedido, mas é a porta de entrada de uma cesta saudável e gourmet que inclui azeite, vinhos e itens especiais.</p>
+<p>É um cliente de compra recorrente e previsível. Quando encontra a gôndola vazia em um fim de semana, ele não registra “falta momentânea”: registra que a loja não é confiável para a sua restrição. A recuperação exige convencê-lo a voltar, e a decisão de retorno raramente acontece na semana seguinte.</p>
+
+<h3><span class="n">3.2</span> Picanha Angus: a compra de destino do domingo</h3>
+<p>A picanha é o que o varejo chama de compra de destino: o cliente sai de casa para comprá-la. Se ela não está disponível, ele não troca por outro corte na mesma loja — leva o churrasco inteiro (carne, carvão, cerveja, acompanhamentos) para o concorrente. A perda não é de 1 kg de carne; é da cesta associada e da venda do fim de semana.</p>
+<p>Com 12 kg, a loja atende aproximadamente 8 a 10 famílias (1,2 a 1,5 kg por família). Depois disso, a gôndola fica vazia até quarta-feira, dia 04/11. E o calendário joga contra: o feriado de Finados transforma o domingo em véspera de feriado, com movimento de churrasco acima do normal. A média de 15 kg/dia subestima a demanda justamente nos dois dias mais relevantes.</p>
+<p>Para o público A/B do da região, o custo de trocar de loja é baixo — deslocamento curto, oferta próxima e alta exigência de sortimento. Esses clientes toleram preço; não toleram ausência recorrente do item âncora. É o perfil em que uma ruptura de fim de semana custa mais em retenção do que em margem.</p>
+
+<h3><span class="n">3.3</span> Quanto está em jogo</h3>
+<table class="data">
+  <thead>
+    <tr>
+      <th style="width:30%">SKU</th>
+      <th class="num" style="width:15%">Demanda até a entrega</th>
+      <th class="num" style="width:12%">Estoque hoje</th>
+      <th class="num" style="width:12%">Déficit</th>
+      <th class="num" style="width:15%">Preço de venda</th>
+      <th class="num" style="width:16%">Faturamento exposto</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Pão sem glúten</td><td class="num">24 un</td><td class="num">4</td><td class="num">20 un</td><td class="num">R$ 24,90</td><td class="num">R$ 498,00</td></tr>
+    <tr class="alt"><td>Picanha Angus</td><td class="num">45 kg</td><td class="num">12</td><td class="num">33 kg</td><td class="num">R$ 119,90</td><td class="num">R$ 3.956,70</td></tr>
+    <tr><td>Vinho Malbec</td><td class="num">10 un</td><td class="num">3</td><td class="num">7 un</td><td class="num">R$ 320,00</td><td class="num">R$ 2.240,00</td></tr>
+    <tr class="alt"><td>Azeite extra virgem</td><td class="num">25 un</td><td class="num">8</td><td class="num">17 un</td><td class="num">R$ 48,90</td><td class="num">R$ 831,30</td></tr>
+    <tr class="total"><td>Total exposto</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">R$ 7.526,00</td></tr>
+  </tbody>
+</table>
+<p class="footnote">Cenário conservador: primeira entrega na quarta (04/11) para carne, quinta (05/11) para pão e vinho, sexta (06/11) para azeite. Se houver operação no feriado, a exposição cai para <strong>R$ 4.533,60</strong>. A conta usa média diária plana e não desconta substituição interna — trata-se, portanto, de um piso de exposição, não de uma projeção de perda contábil.</p>
+
+<p>Parte dessa demanda migra para substitutos dentro da loja (Casillero del Diablo, Bife Ancho, arroz premium), o que reduz a perda de faturamento. O efeito que não se recupera é o comportamental: o cliente que encontrou a gôndola vazia no feriado ajusta a próxima compra. Para dimensionar a ordem de grandeza, cada cliente A/B com ticket de R$ 480 a R$ 650 e duas a três compras por mês representa <strong>R$ 11,5 mil a R$ 23,4 mil por ano</strong> — de 0,8 a 1,7 vez o valor do pedido inteiro. <em>Premissa ilustrativa, a validar com o CRM; não integra a base determinística.</em></p>
+
+<div class="callout">
+  <span class="c-title">O ponto central</span>
+  <p>O pedido de R$ 13.793,20 <strong>não evita a ruptura do fim de semana</strong> — ele evita a ruptura da semana. Entre a autorização e a primeira entrega há pelo menos três dias sem produto. É por isso que a recomendação inclui contenção imediata, e não apenas a compra.</p>
+</div>
+
+<!-- ============================== 04 FINOPS ============================== -->
+
+<div class="sec-head">
+  <span class="sec-num">04 · FinOps de compras</span>
+  <h2>R$ 1.237,00 economizados — e onde a conta ainda não fecha</h2>
+  <p>Seleção determinística de menor preço de custo, com trilha auditável. A economia é real, mas o critério tem um ponto cego de prazo.</p>
+</div>
+
+<p>Para cada SKU, o motor consulta todas as cotações válidas, ordena por preço de custo e seleciona a primeira. O resultado é reprodutível e verificável: a mesma base produz o mesmo pedido, sem intervenção humana e sem espaço para alucinação de preço. A escolha do vinho e da picanha é coberta por teste automatizado, o que impede regressão silenciosa do critério.</p>
+
+<table class="data">
+  <thead>
+    <tr>
+      <th style="width:18%">SKU</th>
+      <th style="width:27%">Fornecedor escolhido</th>
+      <th class="num" style="width:9%">Preço</th>
+      <th style="width:24%">Alternativa</th>
+      <th class="num" style="width:8%">Ganho/un.</th>
+      <th class="num" style="width:14%">Economia total</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Vinho Malbec</td>
+      <td>Vinhos Nobres <span class="badge b-green">D+2</span></td>
+      <td class="num">185,00</td>
+      <td>Central Alimentos · 210,00</td>
+      <td class="num">25,00</td>
+      <td class="num"><strong>675,00</strong><br><span class="note">11,9%</span></td>
+    </tr>
+    <tr class="alt">
+      <td>Picanha Angus</td>
+      <td>Carnes Nobres <span class="badge b-green">D+1</span></td>
+      <td class="num">74,50</td>
+      <td>Central Alimentos · 79,90</td>
+      <td class="num">5,40</td>
+      <td class="num"><strong>475,20</strong><br><span class="note">6,8%</span></td>
+    </tr>
+    <tr>
+      <td>Azeite extra virgem</td>
+      <td>Central Alimentos <span class="badge b-amber">D+3</span></td>
+      <td class="num">28,50</td>
+      <td>Vinhos Nobres · 29,90</td>
+      <td class="num">1,40</td>
+      <td class="num"><strong>86,80</strong><br><span class="note">4,7%</span></td>
+    </tr>
+    <tr class="alt">
+      <td>Pão sem glúten</td>
+      <td>BioPan <span class="badge b-green">D+2</span></td>
+      <td class="num">13,20</td>
+      <td>fornecedor único</td>
+      <td class="num">—</td>
+      <td class="num">—<br><span class="note">sem comparativo</span></td>
+    </tr>
+    <tr class="total">
+      <td colspan="5">Economia total vs. pior cotação disponível (R$ 15.030,20)</td>
+      <td class="num">R$ 1.237,00<br><span class="note" style="font-weight:normal">8,2% vs. pior</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <span class="c-title">Recomendação FinOps</span>
+  <p>Manter a compra do azeite no fornecedor mais barato, mas combinar com ele a antecipação de parte do volume (15 un) para o D+2 via Vinhos Nobres, dentro da alçada de contingência. O prêmio é de <strong>R$ 21,00</strong> — 2,9% do faturamento que essas 15 unidades representam (R$ 733,50). A regra permanente é migrar de “menor preço” para <strong>menor custo total de ruptura</strong> (preço + prazo + frete + MOQ).</p>
+</div>
+
+<div class="two-col">
+<table><tr><td>
+  <h3 style="margin-top:4pt"><span class="n">4.1</span> O que funcionou</h3>
+  <ul>
+    <li><strong>Vinho:</strong> R$ 185,00 contra R$ 210,00 da concorrência — 11,9% abaixo, com entrega mais rápida (2 dias contra 3). Melhor preço e melhor prazo na mesma escolha.</li>
+    <li><strong>Picanha:</strong> R$ 74,50 contra R$ 79,90, com entrega em 1 dia. O especialista em carnes também é o mais barato.</li>
+    <li><strong>Pedido mínimo:</strong> as quatro POs superam o mínimo de cada fornecedor (R$ 1.500 / R$ 800 / R$ 500 / R$ 300). Nenhum risco de recusa por MOQ.</li>
+  </ul>
+</td><td>
+  <h3 style="margin-top:4pt"><span class="n">4.2</span> Onde o critério tem limite</h3>
+  <ul>
+    <li><strong>Azeite:</strong> a cotação mais barata é a mais lenta (D+3 contra D+2). A economia de R$ 86,80 vem acompanhada de um dia adicional de exposição — e o item tem o maior prazo de entrega.</li>
+    <li><strong>Custo landed:</strong> frete, substituição tributária e bonificações não estão na base. O valor é estimado, não final.</li>
+    <li><strong>Validade:</strong> as cotações são de 31/10 e não têm prazo formal de validade cadastrado.</li>
+  </ul>
+</td></tr></table>
+</div>
+
+
+
+<!-- ============================== 05 AÇÃO ============================== -->
+<div class="page-break"></div>
+<div class="sec-head">
+  <span class="sec-num">05 · Ação imediata · Human-in-the-loop</span>
+  <h2>Autorização formal do pedido</h2>
+  <p>Quatro ordens de compra, entrega escalonada por fornecedor e um plano de contenção para as 72 horas sem estoque.</p>
+</div>
+
+<p>A camada de IA não executa compras. Ela prepara, calcula e submete; a emissão da ordem é ato humano, com registro de quem autorizou, quando e em que condições. O pedido abaixo está pronto para transmissão — depende apenas desta autorização.</p>
+
+<table class="data">
+  <thead>
+    <tr>
+      <th style="width:8%">PO</th>
+      <th style="width:30%">Fornecedor</th>
+      <th style="width:24%">Itens</th>
+      <th class="num" style="width:16%">Valor</th>
+      <th class="num" style="width:7%">Prazo</th>
+      <th style="width:15%">Entrega estimada</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>PO-01</strong></td>
+      <td>Frigorífico Carnes Nobres</td>
+      <td>Picanha Angus · 88 kg</td>
+      <td class="num">R$ 6.556,00</td>
+      <td class="num">D+1</td>
+      <td><strong>qua 04/11</strong></td>
+    </tr>
+    <tr class="alt">
+      <td><strong>PO-02</strong></td>
+      <td>Distribuidora Vinhos Nobres Ltda</td>
+      <td>Angelica Zapata · 27 un</td>
+      <td class="num">R$ 4.995,00</td>
+      <td class="num">D+2</td>
+      <td><strong>qui 05/11</strong></td>
+    </tr>
+    <tr>
+      <td><strong>PO-03</strong></td>
+      <td>BioPan Distribuidora Sem Glúten</td>
+      <td>Pão multigrãos · 36 un</td>
+      <td class="num">R$ 475,20</td>
+      <td class="num">D+2</td>
+      <td><strong>qui 05/11</strong></td>
+    </tr>
+    <tr class="alt">
+      <td><strong>PO-04</strong></td>
+      <td>Distribuidora Central Alimentos</td>
+      <td>Azeite extra virgem · 62 un</td>
+      <td class="num">R$ 1.767,00</td>
+      <td class="num">D+3</td>
+      <td><strong>sex 06/11</strong></td>
+    </tr>
+    <tr class="total">
+      <td colspan="3">Total do pré-pedido</td>
+      <td class="num">R$ 13.793,20</td>
+      <td class="num">—</td>
+      <td>—</td>
+    </tr>
+  </tbody>
+</table>
+<p class="footnote">Datas na janela conservadora: POs transmitidas hoje até 21h, processadas na primeira abertura útil (terça, 03/11, após o feriado de Finados). Se o fornecedor operar no feriado, as entregas antecipam em um dia. O prazo D+n é contado em dias úteis a partir do processamento.</p>
+
+<h3><span class="n">5.1</span> Plano de contenção até a primeira entrega</h3>
+<p>Nenhuma dessas ações substitui o pedido; todas reduzem a perda enquanto ele não chega. Execução sob responsabilidade do Gerente de Loja, com apoio do Compras.</p>
+<table class="data">
+  <thead>
+    <tr>
+      <th style="width:22%">Frente</th>
+      <th style="width:56%">Ação</th>
+      <th style="width:22%">Responsável / prazo</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Transferência</strong></td>
+      <td>Verificar disponibilidade de picanha e pão sem glúten em outras unidades do grupo e transferir ainda hoje. Meta: 15 kg de picanha e 12 un de pão.</td>
+      <td>Gerente de Loja<br>hoje, 21h</td>
+    </tr>
+    <tr class="alt">
+      <td><strong>Compra de salvamento</strong></td>
+      <td>Se não houver transferência, comprar no atacado local até R$ 1.500,00 (alçada de contingência), com prioridade para picanha e pão.</td>
+      <td>Compras<br>domingo, 10h</td>
+    </tr>
+    <tr>
+      <td><strong>Racionamento</strong></td>
+      <td>Limite de 2 un de pão por cliente e 2 kg de picanha por CPF, com sinalização em gôndola. Evita compra de revenda e distribui o estoque.</td>
+      <td>Operação<br>imediatamente</td>
+    </tr>
+    <tr class="alt">
+      <td><strong>Substituição ativa</strong></td>
+      <td>Posicionar Casillero del Diablo (R$ 65,00), arroz premium e cortes alternativos como substitutos, com degustação e comunicação no PDV.</td>
+      <td>Vendas<br>domingo</td>
+    </tr>
+    <tr>
+      <td><strong>Comunicação</strong></td>
+      <td>Avisar clientes do programa de fidelidade sobre a chegada da picanha na quarta e do pão na quinta; oferecer reserva.</td>
+      <td>CRM / Loja<br>segunda</td>
+    </tr>
+    <tr class="alt">
+      <td><strong>Inventário</strong></td>
+      <td>Contagem cega dos cinco SKUs críticos, incluindo o Ancho Wagyu. O sistema assume estoque teórico; divergência de contagem muda a decisão.</td>
+      <td>Estoque<br>hoje, 22h</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="page-break"></div>
+<h3 style="margin-top:0"><span class="n">5.2</span> Opções de decisão</h3>
+<table class="data">
+  <thead>
+    <tr>
+      <th style="width:13%">Opção</th>
+      <th style="width:35%">Escopo</th>
+      <th class="num" style="width:13%">Valor</th>
+      <th style="width:41%">Consequência</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>A</strong><br><span style="font-family:'DejaVu Sans',sans-serif;font-size:5.8pt;letter-spacing:0.2pt;color:#0E3B2E">RECOMENDADA</span></td>
+      <td>Autorizar as 4 POs + alçada de contingência de R$ 1.500,00</td>
+      <td class="num">R$ 13.793,20<br><span class="note">+ R$ 1.500,00</span></td>
+      <td>Reposição completa, melhor preço e plano de contenção ativo. Cobertura pós-entrega de 6,7 a 14 dias.</td>
+    </tr>
+    <tr class="alt">
+      <td><strong>B</strong></td>
+      <td>Autorizar apenas prioridade 1 (picanha + pão)</td>
+      <td class="num">R$ 7.031,20</td>
+      <td>Protege os itens âncora, mas deixa vinho e azeite sem reposição — 49% do valor do pedido (R$&nbsp;6.762,00).</td>
+    </tr>
+    <tr>
+      <td><strong>C</strong></td>
+      <td>Postergar para segunda-feira</td>
+      <td class="num">—</td>
+      <td>Perde a janela de processamento antes do feriado; entregas deslocam para 05–09/11 e a ruptura se estende.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="approve">
+  <div class="t">Termo de autorização — Parecer nº 2026-10-31-RVP</div>
+  <div class="chk"><span class="box"></span><strong>Autorizo integralmente</strong> a emissão das 4 POs, no valor de R$ 13.793,20, e a alçada de contingência de R$ 1.500,00.</div>
+  <div class="chk"><span class="box"></span><strong>Autorizo parcialmente</strong> as POs indicadas abaixo, no valor de R$ ______________________.</div>
+  <div class="chk"><span class="box"></span><strong>Requeiro revisão</strong> antes da emissão. Motivo: __________________________________________</div>
+  <div class="chk" style="margin-top:6pt">Condições adicionais: __________________________________________________________________________</div>
+
+  <div class="sig">
+    <table>
+      <tr>
+        <td><div class="line">Gerente de Compras<div class="role">Nome · assinatura · data e hora</div></div></td>
+        <td><div class="line">Diretor da Loja Conceito<div class="role">Nome · assinatura · data e hora</div></div></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<p class="footnote"><strong>Instrução de resposta:</strong> responder até 20h30 de 31/10/2026 com a expressão “AUTORIZO — PO 2026-10-31-RVP”. A autorização registrada nesta ficha é anexada ao dossiê auditável do pedido, com carimbo de tempo e identificação do aprovador. Sem resposta até o horário, o pedido não é transmitido e o cenário de ruptura se estende por mais um dia.</p>
+
+<h3 style="margin-top:14pt"><span class="n">5.3</span> Após a autorização — próximas 2 horas</h3>
+<table class="data">
+  <thead>
+    <tr>
+      <th style="width:5%">#</th>
+      <th style="width:60%">Ação</th>
+      <th style="width:20%">Responsável</th>
+      <th class="num" style="width:15%">Horário</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td>Emitir as 4 POs no ERP e obter confirmação de recebimento dos fornecedores</td><td>Compras</td><td class="num">21h00</td></tr>
+    <tr class="alt"><td>2</td><td>Confirmar janela de entrega e priorizar a PO-01 (carne) para 03/11</td><td>Compras</td><td class="num">21h30</td></tr>
+    <tr><td>3</td><td>Acionar transferência entre lojas e compra de salvamento (alçada de R$ 1.500)</td><td>Gerente de Loja</td><td class="num">22h00</td></tr>
+    <tr class="alt"><td>4</td><td>Publicar limites de compra e substituições no PDV</td><td>Operação</td><td class="num">22h00</td></tr>
+    <tr><td>5</td><td>Arquivar a autorização assinada no dossiê, com hash e carimbo de tempo</td><td>Governança</td><td class="num">22h00</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================== 06 ACHADOS ============================== -->
+<div class="page-break"></div>
+
+<div class="sec-head">
+  <span class="sec-num">06 · Governança e arquitetura</span>
+  <h2>Achados de auditoria e correções necessárias</h2>
+  <p>O motor está correto no que calcula. O que falta é calendário, critério de custo total e ponto de pedido.</p>
+</div>
+
+<p>Antes de autorizar, é preciso registrar o principal achado desta auditoria: <strong>o quinto item crítico não está no valor total</strong>. O SKU-CAR-002 (Bife Ancho Wagyu, 5 un contra mínimo de 8) não tem cotação válida e o motor o devolve como pendência <span class="mono">SEM_COTACAO</span>, com ação sugerida de cotação emergencial — mas seus 20 un ficam fora dos R$ 13.793,20. O relatório está correto e completo; o valor é que é um piso.</p>
+
+<table class="data">
+  <thead>
+    <tr>
+      <th style="width:5%">#</th>
+      <th style="width:27%">Achado</th>
+      <th style="width:31%">Evidência e impacto</th>
+      <th style="width:25%">Correção recomendada</th>
+      <th style="width:12%">Prazo</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr class="alt">
+      <td><span class="badge b-red">P0</span></td>
+      <td><strong>Prazo em dias corridos, sem calendário</strong></td>
+      <td>O motor compara cobertura com prazo sem considerar feriados e fins de semana. Finados (02/11) desloca todas as entregas.</td>
+      <td>Tabela de feriados e dias úteis, cutoff de pedido e SLA por fornecedor.</td>
+      <td>15 dias</td>
+    </tr>
+<tr>
+      <td><span class="badge b-amber">P1</span></td>
+      <td><strong>Preço como critério primário</strong></td>
+      <td><span class="mono">ORDER BY preco_custo</span> define o vencedor; prazo e MOQ só desempatam. Frete, substituição tributária e custo de ruptura ficam fora. Caso do azeite.</td>
+      <td>Score multicritério com custo landed e peso de prazo; manter o determinismo com regra explícita e versionada.</td>
+      <td>30 dias</td>
+    </tr>
+<tr>
+      <td><span class="badge b-amber">P1</span></td>
+      <td><strong>Pendência de cotação fora do valor total</strong></td>
+      <td>O Ancho Wagyu entra como <span class="mono">SEM_COTACAO</span> e com ação sugerida, mas seus 20 un não estão nos R$ 13.793,20. O valor autorizado é um piso.</td>
+      <td>Reservar alçada para a cotação emergencial e acompanhar a pendência até o fechamento do pedido.</td>
+      <td>Hoje</td>
+    </tr>
+<tr class="alt">
+      <td><span class="badge b-amber">P1</span></td>
+      <td><strong>Estoque mínimo não é ponto de pedido</strong></td>
+      <td><span class="mono">procurement_engine.py:74</span> — a compra dispara em <span class="mono">qtd ≤ mínimo</span>, sem estoque de segurança por prazo. Os quatro itens em compra já chegam sem folga.</td>
+      <td>Ponto de pedido = venda média × prazo + estoque de segurança (desvio da demanda), com uplift de fim de semana.</td>
+      <td>30 dias</td>
+    </tr>
+<tr>
+      <td><span class="badge b-muted">P2</span></td>
+      <td><strong>Quantidade sem múltiplo de caixa</strong></td>
+      <td>27 garrafas de vinho não respeitam caixa de 6; 88 kg de picanha dependem do fracionamento do fornecedor.</td>
+      <td>Arredondar por múltiplo de embalagem e validar MOQ no código, não na planilha.</td>
+      <td>45 dias</td>
+    </tr>
+<tr class="alt">
+      <td><span class="badge b-muted">P2</span></td>
+      <td><strong>Cotação sem validade e sem trilha de aprovação</strong></td>
+      <td>Preços de 31/10 sem prazo de validade; a autorização humana não é registrada na base.</td>
+      <td>Validade de 48h, versionamento de preço e log de aprovação (quem, quando, hash do relatório).</td>
+      <td>60 dias</td>
+    </tr>
+</tbody>
+</table>
+
+<h3><span class="n">6.1</span> O que já está sob controle</h3>
+<p>Vale registrar o que a camada faz bem, para não corrigir o que não está quebrado: o cálculo é determinístico e reproduzível; o contrato de saída é validado por Pydantic v2 em modo estrito; 36 testes cobrem preço inválido, MOQ, dado corrompido e prompt injection; itens sem cotação viram pendência explícita, nunca descarte silencioso; e o SQLite opera em WAL com foreign keys. Não há inferência probabilística no valor do pedido — o que existe é aritmética verificável. A correção necessária é de <strong>critério de decisão</strong> (prazo, custo total e ponto de pedido), não de modelo.</p>
+
+<!-- ============================== 07 ANEXO ============================== -->
+<div class="page-break"></div>
+<div class="sec-head" style="margin-top:16pt">
+  <span class="sec-num">07 · Anexo técnico</span>
+  <h2>Premissas, rastreabilidade e limites</h2>
+</div>
+
+<div class="two-col">
+<table><tr><td>
+  <h3 style="margin-top:2pt"><span class="n">7.1</span> Premissas</h3>
+  <ul class="note" style="font-size:7.8pt">
+    <li>Dados sintéticos de demonstração; marca, loja e fornecedores são fictícios.</li>
+    <li>A venda diária é média plana e não captura o pico de fim de semana e feriado.</li>
+    <li>Prazos são tratados como dias úteis a partir do processamento; 02/11 é feriado nacional (Finados).</li>
+    <li>Preços de custo não incluem frete, ST, bonificação ou devolução.</li>
+    <li>Cotações de 31/10/2026, sem validade formal cadastrada.</li>
+    <li>Estoque do sistema não foi conferido por contagem cega.</li>
+    <li>A exposição de faturamento é um piso bruto, antes de substituição interna.</li>
+  </ul>
+</td><td>
+  <h3 style="margin-top:2pt"><span class="n">7.2</span> Rastreabilidade</h3>
+  <ul class="note" style="font-size:7.8pt">
+    <li><strong>Fonte:</strong> <span class="mono">data/retail_store.db</span> — tabelas <span class="mono">produtos</span>, <span class="mono">estoque_loja</span>, <span class="mono">cotacoes_fornecedores</span>, <span class="mono">fornecedores</span>.</li>
+    <li><strong>Motor:</strong> <span class="mono">src/skills/procurement_engine.py</span> · função <span class="mono">gerar_analise_pre_pedido()</span>.</li>
+    <li><strong>Contrato:</strong> <span class="mono">RelatorioPrePedido</span> (Pydantic).</li>
+    <li><strong>Testes:</strong> <span class="mono">tests/test_procurement.py</span> — 36 casos, incluindo cotação, MOQ, dados corrompidos e prompt injection.</li>
+    <li><strong>Ciclo:</strong> 31/10/2026 · 7 SKUs · 4 fornecedores.</li>
+  </ul>
+</td></tr></table>
+</div>
+
+
+<h3 style="margin-top:12pt"><span class="n">7.3</span> Glossário</h3>
+<div class="two-col">
+<table><tr><td>
+  <p class="note" style="margin-bottom:4pt"><strong>Cobertura</strong> — estoque atual dividido pela venda média diária. Indica por quantos dias a loja vende sem reposição.</p>
+  <p class="note" style="margin-bottom:4pt"><strong>Ponto de pedido</strong> — nível de estoque que dispara a compra considerando o prazo de entrega e a segurança contra variação de demanda.</p>
+  <p class="note" style="margin-bottom:4pt"><strong>Lead time</strong> — intervalo entre o pedido e a disponibilidade do produto na loja.</p>
+</td><td>
+  <p class="note" style="margin-bottom:4pt"><strong>MOQ</strong> — pedido mínimo exigido pelo fornecedor; abaixo dele a entrega é recusada.</p>
+  <p class="note" style="margin-bottom:4pt"><strong>Custo landed</strong> — preço de compra somado a frete, tributos e demais custos de internalização.</p>
+  <p class="note" style="margin-bottom:4pt"><strong>Human-in-the-loop</strong> — decisão humana obrigatória antes da execução de uma ação sensível, como emitir uma ordem de compra.</p>
+</td></tr></table>
+</div>
+
+<div class="divider"></div>
+<p class="note" style="margin-bottom:2pt"><strong>Impressão digital do relatório (SHA-256):</strong></p>
+<p class="mono" style="font-size:6.8pt; word-break:break-all; margin:0 0 8pt 0; color:#4A544D">73a9cf5175dfc5a6beb23602d1759da0dde07ee8a1dd1a937fcd13a3725e26ac</p>
+<p class="note">A impressão digital identifica de forma única o conteúdo estruturado que originou este parecer. Qualquer alteração em quantidade, preço ou fornecedor produz um hash diferente e invalida a autorização vinculada a ele.</p>
+
+<div class="divider"></div>
+<p class="note"><strong>Limite de escopo.</strong> Este parecer é um instrumento de apoio à decisão. Não substitui a conferência física do estoque, a negociação comercial com fornecedores nem a validação tributária da operação. Os valores são estimativas determinísticas calculadas sobre a base disponível na data de emissão.</p>
+
+</body>
+</html>
