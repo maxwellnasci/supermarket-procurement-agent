@@ -7,6 +7,8 @@ from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from src.skills.forecast import carregar_historico, prever_demanda
+
 DB_PATH = os.path.join(os.path.dirname(__file__), "../../data/retail_store.db")
 
 # Estoque positivo sem venda registrada: cobertura indeterminada, representada
@@ -25,6 +27,13 @@ class StatusItem(str, Enum):
     DADO_INVALIDO = "DADO_INVALIDO"
 
 
+class FonteDemanda(str, Enum):
+    """De onde veio a demanda diária usada no cálculo da compra."""
+
+    PREVISAO = "previsao"  # previsão feita a partir de vendas_diarias
+    MEDIA_FIXA = "media_fixa"  # plano B: venda_media_diaria do cadastro
+
+
 class ContratoBase(BaseModel):
     """Contrato estrito: sem campos extras, sem coerção de tipos, sem inf/NaN."""
 
@@ -41,7 +50,14 @@ class ItemPrePedido(ContratoBase):
         description="Saldo do sistema; pode ser negativo por divergência de inventário",
     )
     estoque_minimo: float = Field(..., ge=0)
-    venda_diaria: float = Field(..., ge=0)
+    venda_diaria: float = Field(
+        ...,
+        ge=0,
+        description="Demanda diária média usada no cálculo (prevista ou média fixa)",
+    )
+    fonte_demanda: FonteDemanda = Field(
+        ..., description="Origem da demanda: previsao ou media_fixa"
+    )
     dias_restantes: float = Field(
         ..., ge=0, description="Quantos dias até o estoque zerar"
     )
@@ -70,7 +86,16 @@ class Pendencia(ContratoBase):
         None, ge=0, description="Quantos dias até o estoque zerar"
     )
     quantidade_necessaria: float | None = Field(
-        None, gt=0, description="Quantidade que seria comprada se houvesse cotação"
+        None,
+        gt=0,
+        description=(
+            "Quantidade que seria comprada se houvesse cotação. Sem fornecedor não há "
+            "prazo de entrega, então é um piso: recalcular após a cotação"
+        ),
+    )
+    fonte_demanda: FonteDemanda | None = Field(
+        None,
+        description="Origem da demanda usada em quantidade_necessaria (se calculada)",
     )
     fornecedor_id: int | None = Field(None, gt=0)
     fornecedor_nome: str | None = None
@@ -87,7 +112,7 @@ class RelatorioPrePedido(ContratoBase):
     total_itens_criticos: int = Field(
         ...,
         ge=0,
-        description="Itens no ou abaixo do estoque mínimo, com ou sem cotação",
+        description="Itens no ou abaixo do estoque mínimo que exigem compra, com ou sem cotação",
     )
     total_itens_saudaveis: int = Field(..., ge=0)
     total_itens_bloqueados: int = Field(
@@ -137,7 +162,25 @@ def _motivo_estoque_invalido(qtd_atual, est_min, est_max, venda_dia) -> str | No
     ]
     if negativos:
         return f"Valores negativos em: {', '.join(negativos)}"
+    if est_max < est_min:
+        return "Cadastro inconsistente: estoque_maximo menor que estoque_minimo"
     return None
+
+
+def _demanda_diaria(
+    conn: sqlite3.Connection, sku: str, venda_media: float, dias: int
+) -> tuple[FonteDemanda, list[float]]:
+    """Demanda prevista de cada um dos próximos `dias` dias e a fonte usada.
+
+    Usa a previsão de `forecast.py`. Se o SKU não tiver histórico utilizável
+    (ausente, curto, com buracos ou corrompido), cai para a venda média fixa.
+    A falha de um SKU nunca afeta os outros.
+    """
+    try:
+        previsao = prever_demanda(carregar_historico(conn, sku), dias)
+        return FonteDemanda.PREVISAO, [valor for _, valor in previsao]
+    except ValueError:
+        return FonteDemanda.MEDIA_FIXA, [venda_media] * dias
 
 
 def gerar_analise_pre_pedido(dias_cobertura: int = 7) -> RelatorioPrePedido:
@@ -145,7 +188,18 @@ def gerar_analise_pre_pedido(dias_cobertura: int = 7) -> RelatorioPrePedido:
     Analisa os estoques da Rede Varejo Premium, identifica itens abaixo do estoque mínimo
     ou próximos de ruptura e seleciona a melhor cotação de fornecedor disponível.
     Itens que não podem ser comprados viram pendências explícitas no relatório.
+
+    Quantidade a comprar (arredondada para cima):
+        demanda prevista nos dias (prazo de entrega + dias_cobertura)
+        + estoque de segurança (o estoque mínimo do cadastro)
+        - estoque atual (saldo negativo conta como zero)
     """
+    if (
+        isinstance(dias_cobertura, bool)
+        or not isinstance(dias_cobertura, int)
+        or dias_cobertura < 1
+    ):
+        raise ValueError("dias_cobertura deve ser um inteiro >= 1")
     with closing(get_db_connection()) as conn:
         cursor = conn.cursor()
 
@@ -203,36 +257,9 @@ def gerar_analise_pre_pedido(dias_cobertura: int = 7) -> RelatorioPrePedido:
                 )
                 continue
 
-            # Cálculo matemático determinístico. Saldo negativo é tratado como
-            # gôndola zerada: ruptura já em curso, cobertura zero.
-            if qtd_atual <= 0:
-                dias_restantes = 0.0
-            elif venda_dia > 0:
-                dias_restantes = round(qtd_atual / venda_dia, 1)
-            else:
-                dias_restantes = DIAS_SEM_GIRO
-
             # Critério de compra: se o estoque atual for menor ou igual ao mínimo de segurança
             if qtd_atual > est_min:
                 total_saudaveis += 1
-                continue
-
-            # Quantidade necessária para atingir o estoque máximo, nunca negativa
-            qtd_comprar = round(max(0.0, est_max - max(qtd_atual, 0.0)), 0)
-            if qtd_comprar <= 0:
-                pendencias.append(
-                    Pendencia(
-                        sku=sku,
-                        descricao=descricao,
-                        categoria=categoria,
-                        status=StatusItem.DADO_INVALIDO,
-                        motivo="Estoque máximo não supera o estoque atual; quantidade de compra seria zero",
-                        quantidade_atual=qtd_atual,
-                        estoque_minimo=est_min,
-                        dias_restantes=dias_restantes,
-                        acao_sugerida="Revisar estoque mínimo e máximo do SKU",
-                    )
-                )
                 continue
 
             # Melhor cotação válida: menor preço, depois menor prazo, menor
@@ -260,6 +287,39 @@ def gerar_analise_pre_pedido(dias_cobertura: int = 7) -> RelatorioPrePedido:
                 (cot for cot in cursor.fetchall() if _numero_valido(cot[4])), None
             )
 
+            # A quantidade depende do prazo do fornecedor escolhido. Sem cotação
+            # não há prazo: considera só os dias de cobertura (prazo 0). Prazo
+            # inválido também vira 0 aqui; o contrato Pydantic o rejeita adiante.
+            prazo_bruto = melhor_cotacao[2] if melhor_cotacao else 0
+            prazo_horizonte = (
+                prazo_bruto
+                if isinstance(prazo_bruto, int)
+                and not isinstance(prazo_bruto, bool)
+                and prazo_bruto >= 0
+                else 0
+            )
+            horizonte = prazo_horizonte + dias_cobertura
+            fonte, demanda = _demanda_diaria(conn, sku, venda_dia, horizonte)
+            venda_prevista = sum(demanda) / horizonte
+
+            # Saldo negativo é tratado como gôndola zerada: ruptura já em curso.
+            if qtd_atual <= 0:
+                dias_restantes = 0.0
+            elif venda_prevista > 0:
+                dias_restantes = round(qtd_atual / venda_prevista, 1)
+            else:
+                dias_restantes = DIAS_SEM_GIRO
+
+            # Demanda até a reposição chegar + cobertura + estoque de segurança
+            # (o mínimo do cadastro) - o que já há na prateleira. Arredonda para
+            # cima; o round() antes do ceil evita 14.000000000000002 virar 15.
+            necessidade = sum(demanda) + est_min - max(qtd_atual, 0.0)
+            qtd_comprar = float(math.ceil(round(necessidade, 6)))
+            if qtd_comprar <= 0:
+                # Já está no mínimo e não há venda prevista: nada a comprar.
+                total_saudaveis += 1
+                continue
+
             if not melhor_cotacao:
                 pendencias.append(
                     Pendencia(
@@ -272,7 +332,11 @@ def gerar_analise_pre_pedido(dias_cobertura: int = 7) -> RelatorioPrePedido:
                         estoque_minimo=est_min,
                         dias_restantes=dias_restantes,
                         quantidade_necessaria=qtd_comprar,
-                        acao_sugerida=f"Solicitar cotação emergencial a fornecedores da categoria {categoria}",
+                        fonte_demanda=fonte,
+                        acao_sugerida=(
+                            f"Solicitar cotação emergencial a fornecedores da categoria {categoria}"
+                            " (quantidade calculada sem prazo de entrega; recalcular após a cotação)"
+                        ),
                     )
                 )
                 continue
@@ -297,7 +361,8 @@ def gerar_analise_pre_pedido(dias_cobertura: int = 7) -> RelatorioPrePedido:
                     categoria=categoria,
                     quantidade_atual=qtd_atual,
                     estoque_minimo=est_min,
-                    venda_diaria=venda_dia,
+                    venda_diaria=round(venda_prevista, 2),
+                    fonte_demanda=fonte,
                     dias_restantes=dias_restantes,
                     quantidade_sugerida=qtd_comprar,
                     fornecedor_id=forn_id,
@@ -348,6 +413,7 @@ def gerar_analise_pre_pedido(dias_cobertura: int = 7) -> RelatorioPrePedido:
                         estoque_minimo=item.estoque_minimo,
                         dias_restantes=item.dias_restantes,
                         quantidade_necessaria=item.quantidade_sugerida,
+                        fonte_demanda=item.fonte_demanda,
                         fornecedor_id=item.fornecedor_id,
                         fornecedor_nome=item.fornecedor_nome,
                         valor_total_fornecedor=valor_fornecedor,
@@ -395,7 +461,7 @@ if __name__ == "__main__":
     for item in relatorio.itens:
         print(f"[{item.categoria}] {item.descricao}")
         print(
-            f"   Estoque: {item.quantidade_atual} un | Vende: {item.venda_diaria}/dia -> Cobertura: {item.dias_restantes} dias"
+            f"   Estoque: {item.quantidade_atual} un | Demanda: {item.venda_diaria}/dia ({item.fonte_demanda.value}) -> Cobertura: {item.dias_restantes} dias"
         )
         print(
             f"   Sugestão de Compra: {item.quantidade_sugerida} un com {item.fornecedor_nome} (R$ {item.preco_unitario:.2f}/un)"
