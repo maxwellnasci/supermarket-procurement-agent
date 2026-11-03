@@ -1,13 +1,7 @@
 # Supermarket Procurement Agent
 
 [![CI](https://github.com/maxwellnasci/supermarket-procurement-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/maxwellnasci/supermarket-procurement-agent/actions/workflows/ci.yml)
-[![Testes](https://img.shields.io/badge/testes-36%20passando-brightgreen)](#qualidade-e-testes)
-[![Cobertura do motor](https://img.shields.io/badge/cobertura%20do%20motor-88%25-green)](#qualidade-e-testes)
-[![Ruff](https://img.shields.io/badge/ruff-0%20erros-261230?logo=ruff&logoColor=white)](https://docs.astral.sh/ruff/)
-[![Python](https://img.shields.io/badge/python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Pydantic](https://img.shields.io/badge/pydantic-v2%20strict-E92063?logo=pydantic&logoColor=white)](https://docs.pydantic.dev/)
-
-Motor **determinístico** de pré-pedido de compras para varejo alimentar premium, desenhado para alimentar um agente de IA com dados **governados, validados e sanitizados**.
+Motor **determinístico** de pré-pedido de compras para varejo alimentar premium, desenhado para alimentar um agente de IA com dados **governados, validados e sanitizados**. A quantidade a comprar é calculada a partir de uma **previsão de demanda** feita sobre o histórico de vendas.
 
 O princípio central: **o LLM explica, o código decide.** Quantidades, fornecedores e valores são calculados por regras auditáveis e cobertas por testes. O modelo de linguagem recebe apenas um dossiê estruturado e nunca altera números.
 
@@ -19,12 +13,14 @@ O princípio central: **o LLM explica, o código decide.** Quantidades, forneced
 
 - [Documentação](#documentação)
 - [Arquitetura](#arquitetura)
+- [Como a previsão de demanda funciona](#como-a-previsão-de-demanda-funciona)
 - [Motor determinístico de compras](#motor-determinístico-de-compras)
 - [FinOps e desempate multicritério](#finops-e-desempate-multicritério)
 - [Ruptura ativa e pedido mínimo (MOQ)](#ruptura-ativa-e-pedido-mínimo-moq)
 - [Defesa contra Indirect Prompt Injection](#defesa-contra-indirect-prompt-injection)
 - [Como executar](#como-executar)
 - [Qualidade e testes](#qualidade-e-testes)
+- [Limitações](#limitações)
 - [Estrutura do projeto](#estrutura-do-projeto)
 - [Roadmap](#roadmap)
 
@@ -35,33 +31,92 @@ O princípio central: **o LLM explica, o código decide.** Quantidades, forneced
 - **[Parecer executivo (PDF, 8 páginas)](docs/parecer_executivo_rede_varejo_premium.pdf)** — demonstração ponta a ponta do dossiê gerado pelo motor: diagnóstico de ruptura, FinOps de cotação, plano de contenção e termo de autorização human-in-the-loop.
 - **[ADR-0001 — Arquitetura do motor determinístico](docs/adr/0001-arquitetura-motor-deterministico.md)** — por que o código decide, como o SQLite é configurado, como o MOQ é validado e como o dossiê é sanitizado antes de chegar ao LLM.
 
+- **[ADR-0002 — Previsão de demanda na necessidade de compra](docs/adr/0002-previsao-de-demanda-na-necessidade-de-compra.md)** — a nova regra de quantidade, o plano B pela média fixa, as alternativas descartadas e as consequências.
+
+> O parecer executivo (PDF/HTML) e o ADR-0001 foram escritos **antes** da previsão de demanda e descrevem a regra anterior de quantidade (reposição até o estoque máximo, sem previsão). Os números deles, e as referências de linha do ADR-0001 ao motor, não batem com a versão atual do código e com a saída descrita neste README.
+
 ---
 
 ## Arquitetura
 
 ```mermaid
 flowchart LR
-    DB[(SQLite WAL<br/>foreign_keys ON<br/>busy_timeout 5s)] --> ENG
+    DB[(SQLite WAL<br/>foreign_keys ON<br/>busy_timeout 5s)] --> F
+    DB --> ENG
+
+    subgraph F[Previsão de demanda]
+        direction TB
+        H[vendas_diarias<br/>histórico por SKU] --> FA[Fatores do dia da semana<br/>e do salário]
+        FA --> MM[Média móvel<br/>de 4 semanas]
+        MM --> P[Demanda prevista<br/>por dia]
+    end
+
+    F --> ENG
 
     subgraph ENG[Motor determinístico]
         direction TB
-        V[Validação de entrada<br/>finitos, não negativos] --> R[Ruptura e cobertura]
-        R --> Q[Melhor cotação válida<br/>desempate multicritério]
-        Q --> M[Consolidação por fornecedor<br/>validação de MOQ]
+        V[Validação de entrada<br/>finitos, não negativos] --> Q[Melhor cotação válida<br/>desempate multicritério]
+        Q --> N[Necessidade de compra<br/>demanda até a chegada<br/>+ cobertura + segurança]
+        N --> M[Consolidação por fornecedor<br/>validação de MOQ]
     end
 
     ENG --> C[Contratos Pydantic v2<br/>strict, extra=forbid,<br/>allow_inf_nan=False]
     C --> S[Sanitização anti<br/>prompt injection]
     S --> LLM[Agente LLM<br/>parecer executivo]
-    C --> H[Pendências para<br/>decisão humana]
+    C --> H2[Pendências para<br/>decisão humana]
+    C --> UI[Tela Streamlit<br/>sem chave de API]
 ```
 
 | Camada | Arquivo | Responsabilidade |
 |---|---|---|
-| Dados | `data/retail_store.db` | Mix de produtos, estoque em loja, fornecedores e cotações |
-| Motor | `src/skills/procurement_engine.py` | Cálculo de cobertura, seleção de fornecedor, MOQ e classificação de cada SKU |
-| Contratos | `ItemPrePedido`, `Pendencia`, `RelatorioPrePedido` | Fronteira tipada e estrita entre o motor e qualquer consumidor |
+| Dados | `data/retail_store.db` | Produtos, estoque em loja, fornecedores, cotações e `vendas_diarias` (180 dias por SKU) |
+| Previsão | `src/skills/forecast.py` | Previsão de demanda por SKU: função pura, sem I/O; só lê o histórico |
+| Motor | `src/skills/procurement_engine.py` | Necessidade de compra, seleção de fornecedor, MOQ e classificação de cada SKU |
+| Contratos | `ItemPrePedido`, `Pendencia`, `RelatorioPrePedido` | Fronteira tipada e estrita entre o motor e qualquer consumidor; registram a `fonte_demanda` |
 | Agente | `src/agent.py` | Serializa o relatório em um dossiê JSON sanitizado para o LLM |
+| Tela | `src/app.py` | Tela em Streamlit: pré-pedido, gráfico de histórico e previsão, pendências |
+
+---
+
+## Como a previsão de demanda funciona
+
+A pergunta que o comprador faz é: *"quanto vamos vender nos próximos dias?"*. A resposta vem de três ideias simples, todas calculadas a partir do histórico de vendas do próprio SKU. Não há modelo de IA nem biblioteca de machine learning.
+
+1. **O dia da semana importa.** Se a loja vende em média 40% mais aos sábados e 20% menos às terças, o sistema aprende esses fatores (sábado = 1,4; terça = 0,8) comparando a venda de cada dia da semana com a média geral.
+2. **O início do mês importa.** Nos dias 1 a 10 o salário acabou de cair e a venda sobe um pouco. O sistema compara os dias 1 a 10 com o restante do mês e guarda esse fator. Os dois lados se compensam, então o salário muda *quando* se vende, não *quanto* se vende no total.
+3. **O nível recente manda.** Tiramos de cada venda o efeito do dia da semana e do salário e fazemos a média das últimas 4 semanas. Esse é o "ritmo normal" do produto hoje.
+
+A previsão de um dia futuro é: **ritmo normal × fator do dia da semana × fator do salário.** Por exemplo, para um produto com ritmo normal de 10 unidades por dia, num sábado do início do mês: 10 × 1,4 × 1,1 ≈ 15 unidades.
+
+**Como o motor usa a previsão.** A quantidade sugerida de compra é:
+
+```text
+demanda prevista nos dias (prazo de entrega + dias de cobertura)
++ estoque de segurança (o estoque mínimo do cadastro)
+- estoque atual                                   → arredondado para cima
+```
+
+Os dias de cobertura valem 7 por padrão. O estoque mínimo continua sendo o gatilho de compra (estoque `<=` mínimo). Se o SKU não tem histórico utilizável (menos de 56 dias, buracos ou valores inválidos), o motor cai para a `venda_media_diaria` fixa do cadastro. Cada item e cada pendência registra a origem no campo `fonte_demanda` (`previsao` ou `media_fixa`), e a tela mostra essa coluna.
+
+### Quão boa é a previsão? (backtest)
+
+Para cada SKU, separamos os **últimos 28 dias**, previmos esse período usando **apenas o histórico anterior** e comparamos com o que realmente foi vendido. O erro é o MAPE (erro percentual médio absoluto). Para comparação, as colunas *média fixa* mostram o erro de usar sempre a venda média fixa do cadastro.
+
+| SKU | Produto | Venda média/dia | MAPE diário (previsão) | MAPE diário (média fixa) | MAPE semanal (previsão) | MAPE semanal (média fixa) |
+|---|---|---:|---:|---:|---:|---:|
+| SKU-CAR-001 | Picanha Angus | 15,0 kg | **4,9%** | 15,9% | 1,9% | 3,7% |
+| SKU-MER-001 | Arroz Branco 5kg | 12,0 | **7,1%** | 20,6% | 4,2% | 2,6% |
+| SKU-PAD-001 | Pão sem glúten | 6,0 | **9,8%** | 19,9% | 4,4% | 5,8% |
+| SKU-MER-002 | Azeite Extra Virgem | 5,0 | **10,6%** | 21,9% | 4,1% | 7,4% |
+| SKU-VIN-002 | Vinho Casillero | 4,0 | **11,8%** | 20,0% | 3,5% | 4,5% |
+| SKU-VIN-001 | Vinho Angelica Zapata | 2,5 | **12,8%** | 22,9% | 4,7% | 6,9% |
+| SKU-CAR-002 | Bife Wagyu (baixo giro) | 1,8 | 31,3% | 39,3% | **10,4%** | 10,5% |
+
+- **Critério de aprovação:** MAPE diário abaixo de 15%, exceto itens de **baixo giro** (venda média abaixo de 2 por dia), que são avaliados pelo MAPE dos 4 totais semanais. Os valores em negrito são os usados em cada SKU.
+- **Por que o baixo giro é medido por semana:** o Wagyu vende 1 ou 2 unidades inteiras por dia. Errar uma unidade já dá 50% de erro naquele dia, por melhor que seja o método. O comprador decide a compra para um período, não para um dia, então a semana é a medida que importa. Mesmo no diário, a previsão (31,3%) vence a média fixa (39,3%).
+- A previsão vence a média fixa no erro **diário** em todos os 7 SKUs. No erro **semanal** o ganho some: a média fixa é melhor no arroz (2,6% contra 4,2%) e o **Wagyu, o único SKU avaliado pelo critério semanal, empata** (10,4% contra 10,5%). Ou seja, para itens de baixo giro o benefício da previsão aparece no erro diário, não no semanal. A previsão se destaca por acertar *quais dias* vendem mais, não por acertar o total da semana.
+- Os números acima foram medidos com o próprio módulo `forecast.py` sobre o banco de demonstração. Os testes de `tests/test_forecast.py` verificam os limites (MAPE abaixo de 15%, previsão melhor ou igual à média fixa), não os valores exatos.
+- **Leia estes números com cautela:** o histórico é sintético e foi gerado com o mesmo tipo de padrão (dia da semana, salário, ruído) que a previsão procura aprender. Veja [Limitações](#limitações).
 
 ---
 
@@ -84,7 +139,7 @@ class ContratoBase(BaseModel):
 | `StatusItem` | Significado | Destino |
 |---|---|---|
 | `COMPRAR` | Abaixo do mínimo, com cotação válida e MOQ atingido | `itens` |
-| `SAUDAVEL` | Estoque acima do mínimo | contador |
+| `SAUDAVEL` | Estoque acima do mínimo, ou no mínimo sem nada a comprar | contador |
 | `SEM_COTACAO` | Abaixo do mínimo e nenhuma cotação válida | `pendencias` |
 | `PEDIDO_ABAIXO_DO_MINIMO` | Pedido consolidado não atinge o MOQ do fornecedor | `pendencias` |
 | `SEM_ESTOQUE_CADASTRADO` | Produto sem registro em estoque | `pendencias` |
@@ -120,7 +175,7 @@ ORDER BY
 ```
 
 - **Cotações inválidas são rejeitadas.** Preço zero ou negativo nunca vence a disputa de menor preço. Como no SQLite `'abc' > 0` é verdadeiro, o tipo da coluna também é verificado, e valores infinitos são descartados no Python.
-- **A quantidade de compra nunca é negativa.** `max(0.0, estoque_maximo - estoque_atual)`; uma compra de zero unidades vira pendência, nunca uma ordem vazia.
+- **A quantidade de compra nunca é negativa nem zero.** Se a necessidade calculada é `<= 0` (item exatamente no mínimo e sem venda prevista), não há o que comprar: o SKU conta como saudável, nunca vira uma ordem vazia. Um cadastro contraditório (`estoque_maximo < estoque_minimo`) vira pendência `DADO_INVALIDO`.
 
 ---
 
@@ -178,7 +233,8 @@ python -m venv .venv
 source .venv/bin/activate
 pip install "pydantic==2.14.2" "pytest==9.2.0" "pytest-cov==7.1.0" "ruff==0.17.3"
 
-# (Opcional) recria o banco de demonstração
+# (Opcional) recria o banco de demonstração, com 180 dias de vendas sintéticas
+# Atenção: a data das cotações usa o dia atual, então o arquivo versionado muda.
 python src/setup_database.py
 
 # Relatório de pré-pedido no terminal
@@ -188,6 +244,17 @@ python -m src.skills.procurement_engine
 python src/agent.py
 ```
 
+### Tela em Streamlit
+
+A tela roda **sem nenhuma chave de API**. O Streamlit é uma dependência opcional (não é necessária para o motor nem para os testes):
+
+```bash
+pip install "streamlit==1.66.1"      # declarado também como extra opcional "app" no pyproject.toml
+streamlit run src/app.py             # execute na raiz do projeto
+```
+
+Ela mostra os totais, a tabela do pré-pedido (com a coluna `Fonte` da demanda), um gráfico de vendas reais e previsão dos próximos 14 dias para qualquer SKU, e as pendências que exigem decisão humana.
+
 Saída do motor sobre o banco de demonstração:
 
 ```text
@@ -195,16 +262,16 @@ Saída do motor sobre o banco de demonstração:
 📊 Total de Itens Analisados: 7
 🚨 Itens Críticos: 5
 ⛔ Itens Bloqueados (ação humana): 1
-💰 Valor Total do Pré-Pedido: R$ 13,793.20
+💰 Valor Total do Pré-Pedido: R$ 20,238.60
 
 [PADARIA_SEM_GLUTEN] Pão Artesanal Multigãos Sem Glúten 400g
-   Estoque: 4.0 un | Vende: 6.0/dia -> Cobertura: 0.7 dias
-   Sugestão de Compra: 36.0 un com BioPan Distribuidora Sem Glúten (R$ 13.20/un)
-   Total: R$ 475.20 | Status: 🚨 RISCO IMINENTE DE RUPTURA (Estoque acaba antes ou no dia da entrega!)
+   Estoque: 4.0 un | Demanda: 6.32/dia (previsao) -> Cobertura: 0.6 dias
+   Sugestão de Compra: 68.0 un com BioPan Distribuidora Sem Glúten (R$ 13.20/un)
+   Total: R$ 897.60 | Status: 🚨 RISCO IMINENTE DE RUPTURA (Estoque acaba antes ou no dia da entrega!)
 ...
 ⛔ [SEM_COTACAO] Bife Ancho Wagyu Fatiado 400g
    Motivo: Estoque no ou abaixo do mínimo e nenhuma cotação válida de fornecedor
-   Ação: Solicitar cotação emergencial a fornecedores da categoria ACOUGUE_PARRILLA
+   Ação: Solicitar cotação emergencial a fornecedores da categoria ACOUGUE_PARRILLA (quantidade calculada sem prazo de entrega; recalcular após a cotação)
 ```
 
 ---
@@ -216,23 +283,39 @@ pytest --cov=src --cov-report=term-missing
 ruff check . && ruff format --check .
 ```
 
-- **36 testes** automatizados, todos passando.
-- **88% de cobertura** no motor (`procurement_engine.py`); o restante é o bloco `__main__` e o caminho de falha de PRAGMA.
-- **Ruff** com 0 erros de lint e formatação.
+A CI roda o mesmo comando em Python 3.12 e 3.14. O teste que executa a tela de verdade (`streamlit.testing`) só roda quando o Streamlit opcional está instalado; sem ele, esse teste é pulado e os demais continuam cobrindo a montagem dos dados da tela.
 
-Os testes adversariais rodam sobre bancos SQLite isolados por teste (`tmp_path`), com o schema real e as foreign keys ativas:
+Os testes rodam sobre bancos SQLite isolados por teste (`tmp_path`), com o schema real e as foreign keys ativas:
 
 | Ameaça | O que é testado |
 |---|---|
 | Cotação maliciosa | Preço zero, negativo, texto e infinito nunca vencem |
 | Não determinismo | Desempate por prazo, MOQ e id do fornecedor |
 | Ruptura mascarada | Estoque zero com venda zero tem cobertura 0.0 e vai para o topo |
-| Compra inválida | Quantidade zero ou negativa nunca gera ordem |
+| Compra inválida | Quantidade zero ou negativa nunca gera ordem; `estoque_maximo < estoque_minimo` vira pendência |
+| Previsão | Backtest de 28 dias por SKU, melhor ou igual à média fixa, nunca negativa, determinística, somente leitura |
+| Plano B | Sem histórico, histórico curto, com buracos ou corrompido: usa a média fixa e registra `fonte_demanda`, sem afetar os outros SKUs |
+| Tela | Importar e montar os dados não exige Streamlit nem chave de API |
 | MOQ | Pedido abaixo do mínimo vira pendência e sai do total |
 | Contrato | Campos extras, coerção de tipo, `inf`, `NaN` e negativos são rejeitados |
 | Dado corrompido | Uma linha inválida não derruba o relatório |
 | Banco | PRAGMAs aplicados e foreign key bloqueando cotação órfã |
 | Prompt injection | Quebras de linha, zero-width, bidi e delimitadores neutralizados no dossiê |
+
+---
+
+## Limitações
+
+Este projeto é uma demonstração de engenharia, não um sistema pronto para operar uma loja. O que um leitor deve saber:
+
+- **Os dados são sintéticos, e o backtest é parcialmente "circular".** O histórico foi gerado por `setup_database.py` como nível × fator do dia da semana × fator do salário × ruído, e a previsão estima exatamente essa estrutura. Os MAPE da tabela acima são, portanto, **otimistas**: com vendas reais haveria promoções, clima, rupturas e comportamentos que o histórico sintético não tem, e o erro seria maior. A tabela prova que o código funciona e que supera a média fixa em condições favoráveis, não que acerta no mundo real.
+- **Seis meses de histórico não capturam sazonalidade anual.** Natal, Páscoa, Dia das Mães e a virada de estação não podem ser aprendidos com 180 dias. A previsão assume que o mês seguinte se parece com as últimas semanas.
+- **Sem promoções nem feriados.** Nenhum calendário de promoções ou de feriados entra no cálculo; um feriado prolongado ou uma ação de preço distorce o histórico e a previsão.
+- **Itens de baixo giro são medidos por semana, e por quê.** Itens que vendem menos de 2 unidades por dia (o Wagyu) têm vendas inteiras e erráticas: o MAPE diário fica em torno de 31% mesmo com um bom método. Por isso o critério de aprovação deles usa os totais semanais, que é o horizonte da decisão de compra. Isso é uma exceção explícita, não um resultado melhor do que o diário. O SKU de menor margem entre os que usam o critério diário é o vinho Angelica Zapata (12,8% contra o limite de 15%).
+- **O estoque máximo não limita mais a compra.** A quantidade sugerida cobre prazo + 7 dias de demanda prevista e pode passar do `estoque_maximo` do cadastro (na demonstração, a picanha resfriada chega a 157 kg contra um máximo cadastrado de 100). Para perecíveis, isso pede validação do comprador.
+- **Sem cotação, a quantidade é um piso.** Quando não há fornecedor, não há prazo de entrega; a quantidade da pendência considera só os dias de cobertura e deve ser recalculada após a cotação.
+- **A previsão parte do último dia do histórico, não de "hoje".** Se o histórico estiver desatualizado, o motor prevê dias que já passaram. Em produção, a carga diária de vendas é pré-requisito.
+- **Fatores estimados em conjunto.** O fator do dia da semana é calculado antes do fator do salário, sobre o histórico bruto; os dois se confundem um pouco. Com 180 dias o efeito é pequeno, mas existe.
 
 ---
 
@@ -247,16 +330,24 @@ supermarket-procurement-agent/
 │   └── retail_store.db            # banco de demonstração (SQLite, modo WAL)
 ├── docs/
 │   ├── adr/
-│   │   └── 0001-arquitetura-motor-deterministico.md
+│   │   ├── 0001-arquitetura-motor-deterministico.md
+│   │   └── 0002-previsao-de-demanda-na-necessidade-de-compra.md
 │   ├── parecer_executivo_rede_varejo_premium.html
 │   └── parecer_executivo_rede_varejo_premium.pdf
 ├── src/
 │   ├── agent.py                   # dossiê sanitizado para o agente LLM
-│   ├── setup_database.py          # gera o banco de demonstração
+│   ├── app.py                     # tela em Streamlit (opcional)
+│   ├── setup_database.py          # gera o banco e 180 dias de vendas sintéticas
 │   └── skills/
+│       ├── forecast.py            # previsão de demanda (função pura)
 │       └── procurement_engine.py  # motor determinístico e contratos Pydantic
 ├── tests/
-│   └── test_procurement.py        # 36 testes, incluindo adversariais
+│   ├── conftest.py                # banco temporário com o schema real
+│   ├── test_app.py                # montagem dos dados e execução da tela
+│   ├── test_forecast.py           # backtest, determinismo, somente leitura
+│   ├── test_motor_previsao.py     # quantidade, plano B e fonte da demanda
+│   ├── test_procurement.py        # motor, contratos e testes adversariais
+│   └── test_vendas_diarias.py     # histórico sintético de vendas
 ├── LICENSE
 └── pyproject.toml                 # dependências fixadas, Ruff e pytest
 ```
@@ -265,10 +356,13 @@ supermarket-procurement-agent/
 
 ## Roadmap
 
-- [ ] Ponto de pedido com estoque de segurança: `ROP = d̄·L + z·√(L·σ²d + d̄²·σ²L)`.
+- [x] Previsão de demanda por média móvel com fatores de dia da semana e salário.
+- [ ] Validar a previsão com vendas reais e comparar com métodos de mercado (ex.: suavização exponencial).
+- [ ] Calendário de promoções e feriados, e histórico longo para sazonalidade anual.
+- [ ] Ponto de pedido com estoque de segurança estatístico: `ROP = d̄·L + z·√(L·σ²d + d̄²·σ²L)` (hoje a segurança é o estoque mínimo do cadastro).
 - [ ] Lead time em dias úteis, grade de entrega do fornecedor e calendário de feriados.
 - [ ] Escolha de fornecedor por **custo total** (preço + frete + custo esperado de ruptura).
 - [ ] `Decimal` para valores monetários e `Enum` para o nível de urgência.
 - [ ] Teto de compra por validade em perecíveis e múltiplo de embalagem.
 - [ ] Integração do agente via *tool use*, com JSON Schema gerado pelos contratos Pydantic.
-- [ ] CI com Ruff, pytest e verificação de tipos a cada pull request.
+- [ ] Verificação de tipos na CI e execução do teste da tela (Streamlit) na CI.
