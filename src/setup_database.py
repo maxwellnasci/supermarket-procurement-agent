@@ -1,13 +1,67 @@
+import math
 import os
+import random
 import sqlite3
+from datetime import date, timedelta
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "../data/retail_store.db")
 
+# Histórico sintético de vendas. Data final FIXA (não date.today()) para que o
+# resultado seja sempre idêntico, qualquer que seja o dia em que o setup rode.
+DIAS_HISTORICO = 180
+DATA_FINAL_HISTORICO = date(2026, 10, 31)
+SEMENTE_HISTORICO = 42
 
-def init_db():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+# Multiplicador por dia da semana (date.weekday(): segunda=0 ... domingo=6).
+# Soma 7,0 => média 1,0: o padrão semanal redistribui as vendas sem inflá-las.
+FATOR_DIA_SEMANA = (0.90, 0.80, 0.80, 0.95, 1.25, 1.40, 0.90)
+FATOR_INICIO_MES = 1.10  # dias 1 a 10: efeito do salário
+ULTIMO_DIA_INICIO_MES = 10
+DESVIO_RUIDO = 0.08  # ruído multiplicativo de ~8%
+
+
+def _multiplicador_calendario(dia: date) -> float:
+    fator = FATOR_DIA_SEMANA[dia.weekday()]
+    if dia.day <= ULTIMO_DIA_INICIO_MES:
+        fator *= FATOR_INICIO_MES
+    return fator
+
+
+def gerar_vendas_diarias(
+    medias_por_sku: dict[str, float],
+    unidades: dict[str, str],
+    data_final: date = DATA_FINAL_HISTORICO,
+    dias: int = DIAS_HISTORICO,
+    semente: int = SEMENTE_HISTORICO,
+) -> list[tuple[str, str, float]]:
+    """Gera (data ISO, sku, quantidade_vendida) de forma determinística."""
+    rng = random.Random(semente)  # instância local: não toca no random global
+    datas = [data_final - timedelta(days=i) for i in range(dias - 1, -1, -1)]
+    multiplicadores = [_multiplicador_calendario(d) for d in datas]
+    # Normaliza pelo multiplicador médio da janela: a média do histórico fica
+    # ancorada na venda_media_diaria do banco, apesar de fim de semana/salário.
+    media_mult = sum(multiplicadores) / len(multiplicadores)
+
+    linhas = []
+    for sku in sorted(medias_por_sku):  # ordem fixa => sequência do RNG estável
+        base = medias_por_sku[sku] / media_mult
+        for dia, mult in zip(datas, multiplicadores, strict=True):
+            valor = max(0.0, base * mult * rng.gauss(1.0, DESVIO_RUIDO))
+            if unidades[sku] == "KG":
+                valor = round(valor, 1)
+            else:
+                # Arredondamento estocástico: mantém a média de itens de baixo
+                # giro (ex.: 1,8/dia) sem viés, ao contrário de round().
+                valor = math.floor(valor + rng.random())
+            linhas.append((dia.isoformat(), sku, float(valor)))
+    return linhas
+
+
+def init_db(db_path: str = DB_PATH):
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    conn = sqlite3.connect(db_path)
     conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA foreign_keys = ON")
     cursor = conn.cursor()
 
     # 1. Tabela de Fornecedores
@@ -57,7 +111,19 @@ def init_db():
     )
     """)
 
-    # Limpa dados anteriores para garantir estado limpo
+    # 5. Histórico de vendas diárias (base para a futura previsão de demanda)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS vendas_diarias (
+        data DATE NOT NULL,
+        sku TEXT NOT NULL,
+        quantidade_vendida REAL NOT NULL CHECK (quantidade_vendida >= 0),
+        PRIMARY KEY (data, sku),
+        FOREIGN KEY (sku) REFERENCES produtos(sku)
+    )
+    """)
+
+    # Limpa dados anteriores para garantir estado limpo (filhos antes dos pais)
+    cursor.execute("DELETE FROM vendas_diarias")
     cursor.execute("DELETE FROM cotacoes_fornecedores")
     cursor.execute("DELETE FROM estoque_loja")
     cursor.execute("DELETE FROM produtos")
@@ -174,6 +240,14 @@ def init_db():
     cursor.executemany(
         "INSERT INTO cotacoes_fornecedores (id_cotacao, sku, id_fornecedor, preco_custo) VALUES (?, ?, ?, ?)",
         cotacoes,
+    )
+
+    # Histórico de 180 dias derivado de produtos/estoque (fonte única dos números)
+    medias = {linha[0]: linha[4] for linha in estoque}
+    unidades = {linha[0]: linha[3] for linha in produtos}
+    cursor.executemany(
+        "INSERT INTO vendas_diarias VALUES (?, ?, ?)",
+        gerar_vendas_diarias(medias, unidades),
     )
 
     conn.commit()
