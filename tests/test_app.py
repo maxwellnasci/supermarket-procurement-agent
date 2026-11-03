@@ -45,9 +45,15 @@ def test_montar_dados_do_banco_de_demonstracao():
         "Demanda/dia",
         "Fonte",
         "Qtd. sugerida",
+        "Limitado pelo máximo",
+        "Qtd. pela previsão",
         "Total (R$)",
     ):
         assert coluna in linha
+    # A picanha é cortada pelo teto de 100 kg e isso aparece na tela
+    picanha = next(i for i in dados["itens"] if i["SKU"] == "SKU-CAR-001")
+    assert picanha["Limitado pelo máximo"] == "SIM"
+    assert picanha["Qtd. pela previsão"] == 157.0
 
     # Todo SKU do relatório tem série para o gráfico: histórico + previsão
     # (inclusive os saudáveis, que não entram no pedido)

@@ -52,6 +52,9 @@ def montar_dados() -> dict:
             "Fonte": i.fonte_demanda.value,
             "Dias restantes": i.dias_restantes,
             "Qtd. sugerida": i.quantidade_sugerida,
+            "Limitado pelo máximo": "SIM" if i.limitado_pelo_maximo else "não",
+            "Qtd. pela previsão": i.quantidade_prevista_sem_teto,
+            "Estoque máx.": i.estoque_maximo,
             "Fornecedor": i.fornecedor_nome,
             "Preço unit. (R$)": i.preco_unitario,
             "Total (R$)": i.valor_total_item,
@@ -67,6 +70,12 @@ def montar_dados() -> dict:
             "Motivo": p.motivo,
             "Qtd. necessária": p.quantidade_necessaria,
             "Fonte": p.fonte_demanda.value if p.fonte_demanda else None,
+            "Qtd. pela previsão": p.quantidade_prevista_sem_teto,
+            "Limitado pelo máximo": (
+                None
+                if p.limitado_pelo_maximo is None
+                else ("SIM" if p.limitado_pelo_maximo else "não")
+            ),
             "Ação sugerida": p.acao_sugerida,
         }
         for p in relatorio.pendencias

@@ -50,6 +50,7 @@ class ItemPrePedido(ContratoBase):
         description="Saldo do sistema; pode ser negativo por divergência de inventário",
     )
     estoque_minimo: float = Field(..., ge=0)
+    estoque_maximo: float = Field(..., ge=0, description="Teto cadastrado do SKU")
     venda_diaria: float = Field(
         ...,
         ge=0,
@@ -62,7 +63,18 @@ class ItemPrePedido(ContratoBase):
         ..., ge=0, description="Quantos dias até o estoque zerar"
     )
     quantidade_sugerida: float = Field(
-        ..., gt=0, description="Quantidade recomendada de compra"
+        ...,
+        gt=0,
+        description="Quantidade recomendada de compra, nunca acima de estoque_maximo - estoque atual",
+    )
+    limitado_pelo_maximo: bool = Field(
+        ...,
+        description="True quando o teto de estoque_maximo cortou a quantidade pedida pela previsão",
+    )
+    quantidade_prevista_sem_teto: float = Field(
+        ...,
+        gt=0,
+        description="Quantidade que a demanda prevista pedia antes do corte pelo máximo",
     )
     fornecedor_id: int = Field(..., gt=0)
     fornecedor_nome: str
@@ -96,6 +108,15 @@ class Pendencia(ContratoBase):
     fonte_demanda: FonteDemanda | None = Field(
         None,
         description="Origem da demanda usada em quantidade_necessaria (se calculada)",
+    )
+    limitado_pelo_maximo: bool | None = Field(
+        None,
+        description="True quando o teto de estoque_maximo cortou a quantidade pedida pela previsão",
+    )
+    quantidade_prevista_sem_teto: float | None = Field(
+        None,
+        gt=0,
+        description="Quantidade que a demanda prevista pedia antes do corte pelo máximo",
     )
     fornecedor_id: int | None = Field(None, gt=0)
     fornecedor_nome: str | None = None
@@ -193,6 +214,8 @@ def gerar_analise_pre_pedido(dias_cobertura: int = 7) -> RelatorioPrePedido:
         demanda prevista nos dias (prazo de entrega + dias_cobertura)
         + estoque de segurança (o estoque mínimo do cadastro)
         - estoque atual (saldo negativo conta como zero)
+    limitada a (estoque_maximo - estoque atual). Quando o teto corta a previsão,
+    o item registra `limitado_pelo_maximo` e `quantidade_prevista_sem_teto`.
     """
     if (
         isinstance(dias_cobertura, bool)
@@ -314,11 +337,39 @@ def gerar_analise_pre_pedido(dias_cobertura: int = 7) -> RelatorioPrePedido:
             # (o mínimo do cadastro) - o que já há na prateleira. Arredonda para
             # cima; o round() antes do ceil evita 14.000000000000002 virar 15.
             necessidade = sum(demanda) + est_min - max(qtd_atual, 0.0)
-            qtd_comprar = float(math.ceil(round(necessidade, 6)))
-            if qtd_comprar <= 0:
+            qtd_prevista = float(math.ceil(round(necessidade, 6)))
+            if qtd_prevista <= 0:
                 # Já está no mínimo e não há venda prevista: nada a comprar.
                 total_saudaveis += 1
                 continue
+
+            # Teto: nunca comprar mais do que cabe até o estoque máximo cadastrado.
+            # Quando o teto corta a previsão, o relatório guarda o que ela pedia
+            # para o comprador decidir se aumenta o máximo.
+            espaco = float(math.floor(round(est_max - max(qtd_atual, 0.0), 6)))
+            if espaco <= 0:
+                pendencias.append(
+                    Pendencia(
+                        sku=sku,
+                        descricao=descricao,
+                        categoria=categoria,
+                        status=StatusItem.DADO_INVALIDO,
+                        motivo="Estoque máximo não supera o estoque atual; quantidade de compra seria zero",
+                        quantidade_atual=qtd_atual,
+                        estoque_minimo=est_min,
+                        dias_restantes=dias_restantes,
+                        # Nada cabe: não há "quantidade a comprar". O que a previsão
+                        # pedia fica em quantidade_prevista_sem_teto.
+                        fonte_demanda=fonte,
+                        limitado_pelo_maximo=True,
+                        quantidade_prevista_sem_teto=qtd_prevista,
+                        acao_sugerida="Revisar estoque mínimo e máximo do SKU (a previsão pede "
+                        f"{qtd_prevista:g} un)",
+                    )
+                )
+                continue
+            qtd_comprar = min(qtd_prevista, espaco)
+            limitado = qtd_prevista > espaco
 
             if not melhor_cotacao:
                 pendencias.append(
@@ -333,6 +384,8 @@ def gerar_analise_pre_pedido(dias_cobertura: int = 7) -> RelatorioPrePedido:
                         dias_restantes=dias_restantes,
                         quantidade_necessaria=qtd_comprar,
                         fonte_demanda=fonte,
+                        limitado_pelo_maximo=limitado,
+                        quantidade_prevista_sem_teto=qtd_prevista,
                         acao_sugerida=(
                             f"Solicitar cotação emergencial a fornecedores da categoria {categoria}"
                             " (quantidade calculada sem prazo de entrega; recalcular após a cotação)"
@@ -361,10 +414,13 @@ def gerar_analise_pre_pedido(dias_cobertura: int = 7) -> RelatorioPrePedido:
                     categoria=categoria,
                     quantidade_atual=qtd_atual,
                     estoque_minimo=est_min,
+                    estoque_maximo=est_max,
                     venda_diaria=round(venda_prevista, 2),
                     fonte_demanda=fonte,
                     dias_restantes=dias_restantes,
                     quantidade_sugerida=qtd_comprar,
+                    limitado_pelo_maximo=limitado,
+                    quantidade_prevista_sem_teto=qtd_prevista,
                     fornecedor_id=forn_id,
                     fornecedor_nome=forn_nome,
                     prazo_entrega_dias=prazo,
@@ -414,6 +470,8 @@ def gerar_analise_pre_pedido(dias_cobertura: int = 7) -> RelatorioPrePedido:
                         dias_restantes=item.dias_restantes,
                         quantidade_necessaria=item.quantidade_sugerida,
                         fonte_demanda=item.fonte_demanda,
+                        limitado_pelo_maximo=item.limitado_pelo_maximo,
+                        quantidade_prevista_sem_teto=item.quantidade_prevista_sem_teto,
                         fornecedor_id=item.fornecedor_id,
                         fornecedor_nome=item.fornecedor_nome,
                         valor_total_fornecedor=valor_fornecedor,
@@ -466,6 +524,11 @@ if __name__ == "__main__":
         print(
             f"   Sugestão de Compra: {item.quantidade_sugerida} un com {item.fornecedor_nome} (R$ {item.preco_unitario:.2f}/un)"
         )
+        if item.limitado_pelo_maximo:
+            print(
+                f"   ⚠️ Limitado pelo estoque máximo ({item.estoque_maximo:g}): "
+                f"a previsão pedia {item.quantidade_prevista_sem_teto:g} un"
+            )
         print(
             f"   Total: R$ {item.valor_total_item:,.2f} | Status: {item.alerta_urgencia}\n"
         )

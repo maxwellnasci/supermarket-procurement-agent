@@ -33,7 +33,7 @@ O princípio central: **o LLM explica, o código decide.** Quantidades, forneced
 
 - **[ADR-0002 — Previsão de demanda na necessidade de compra](docs/adr/0002-previsao-de-demanda-na-necessidade-de-compra.md)** — a nova regra de quantidade, o plano B pela média fixa, as alternativas descartadas e as consequências.
 
-> O parecer executivo (PDF/HTML) e o ADR-0001 foram escritos **antes** da previsão de demanda e descrevem a regra anterior de quantidade (reposição até o estoque máximo, sem previsão). Os números deles, e as referências de linha do ADR-0001 ao motor, não batem com a versão atual do código e com a saída descrita neste README.
+> O parecer executivo (PDF/HTML) e o ADR-0001 foram escritos **antes** da previsão de demanda e descrevem a regra anterior de quantidade (reposição até o estoque máximo, com venda média fixa). Na demonstração o teto do máximo faz as quantidades e o total do pedido coincidirem com os deles, mas a cobertura em dias pode diferir ligeiramente (agora vem da demanda prevista) e as referências de linha do ADR-0001 ao motor estão defasadas.
 
 ---
 
@@ -94,7 +94,11 @@ A previsão de um dia futuro é: **ritmo normal × fator do dia da semana × fat
 demanda prevista nos dias (prazo de entrega + dias de cobertura)
 + estoque de segurança (o estoque mínimo do cadastro)
 - estoque atual                                   → arredondado para cima
+
+limitada a (estoque máximo - estoque atual)      ← o teto sempre vale
 ```
+
+**O teto do estoque máximo vale sempre.** Se a previsão pede mais do que cabe até o `estoque_maximo` cadastrado, o motor compra só o que cabe e **registra o corte** no item: `limitado_pelo_maximo = true`, mais a `quantidade_prevista_sem_teto` (o que a previsão pedia) e o `estoque_maximo`. Assim o comprador enxerga o corte e decide se vale aumentar o máximo cadastrado. A tela mostra a coluna *Limitado pelo máximo* e o dossiê do agente expõe os mesmos campos.
 
 Os dias de cobertura valem 7 por padrão. O estoque mínimo continua sendo o gatilho de compra (estoque `<=` mínimo). Se o SKU não tem histórico utilizável (menos de 56 dias, buracos ou valores inválidos), o motor cai para a `venda_media_diaria` fixa do cadastro. Cada item e cada pendência registra a origem no campo `fonte_demanda` (`previsao` ou `media_fixa`), e a tela mostra essa coluna.
 
@@ -175,7 +179,7 @@ ORDER BY
 ```
 
 - **Cotações inválidas são rejeitadas.** Preço zero ou negativo nunca vence a disputa de menor preço. Como no SQLite `'abc' > 0` é verdadeiro, o tipo da coluna também é verificado, e valores infinitos são descartados no Python.
-- **A quantidade de compra nunca é negativa nem zero.** Se a necessidade calculada é `<= 0` (item exatamente no mínimo e sem venda prevista), não há o que comprar: o SKU conta como saudável, nunca vira uma ordem vazia. Um cadastro contraditório (`estoque_maximo < estoque_minimo`) vira pendência `DADO_INVALIDO`.
+- **A quantidade de compra nunca é negativa nem zero, e nunca passa do estoque máximo.** Se a necessidade calculada é `<= 0` (item exatamente no mínimo e sem venda prevista), não há o que comprar: o SKU conta como saudável. Se há necessidade mas o máximo não deixa espaço (`estoque_maximo <=` estoque atual), o SKU vira pendência `DADO_INVALIDO` guardando o que a previsão pedia. Um cadastro contraditório (`estoque_maximo < estoque_minimo`) também vira pendência.
 
 ---
 
@@ -253,7 +257,7 @@ pip install "streamlit==1.66.1"      # declarado também como extra opcional "ap
 streamlit run src/app.py             # execute na raiz do projeto
 ```
 
-Ela mostra os totais, a tabela do pré-pedido (com a coluna `Fonte` da demanda), um gráfico de vendas reais e previsão dos próximos 14 dias para qualquer SKU, e as pendências que exigem decisão humana.
+Ela mostra os totais, a tabela do pré-pedido (com as colunas `Fonte` da demanda, *Limitado pelo máximo* e *Qtd. pela previsão*), um gráfico de vendas reais e previsão dos próximos 14 dias para qualquer SKU, e as pendências que exigem decisão humana.
 
 Saída do motor sobre o banco de demonstração:
 
@@ -262,12 +266,19 @@ Saída do motor sobre o banco de demonstração:
 📊 Total de Itens Analisados: 7
 🚨 Itens Críticos: 5
 ⛔ Itens Bloqueados (ação humana): 1
-💰 Valor Total do Pré-Pedido: R$ 20,238.60
+💰 Valor Total do Pré-Pedido: R$ 13,793.20
 
 [PADARIA_SEM_GLUTEN] Pão Artesanal Multigãos Sem Glúten 400g
    Estoque: 4.0 un | Demanda: 6.32/dia (previsao) -> Cobertura: 0.6 dias
-   Sugestão de Compra: 68.0 un com BioPan Distribuidora Sem Glúten (R$ 13.20/un)
-   Total: R$ 897.60 | Status: 🚨 RISCO IMINENTE DE RUPTURA (Estoque acaba antes ou no dia da entrega!)
+   Sugestão de Compra: 36.0 un com BioPan Distribuidora Sem Glúten (R$ 13.20/un)
+   ⚠️ Limitado pelo estoque máximo (40): a previsão pedia 68 un
+   Total: R$ 475.20 | Status: 🚨 RISCO IMINENTE DE RUPTURA (Estoque acaba antes ou no dia da entrega!)
+
+[ACOUGUE_PARRILLA] Picanha Angus Certificada Resfriada
+   Estoque: 12.0 un | Demanda: 16.07/dia (previsao) -> Cobertura: 0.7 dias
+   Sugestão de Compra: 88.0 un com Frigorífico Carnes Nobres (R$ 74.50/un)
+   ⚠️ Limitado pelo estoque máximo (100): a previsão pedia 157 un
+   Total: R$ 6,556.00 | Status: 🚨 RISCO IMINENTE DE RUPTURA (Estoque acaba antes ou no dia da entrega!)
 ...
 ⛔ [SEM_COTACAO] Bife Ancho Wagyu Fatiado 400g
    Motivo: Estoque no ou abaixo do mínimo e nenhuma cotação válida de fornecedor
@@ -293,6 +304,7 @@ Os testes rodam sobre bancos SQLite isolados por teste (`tmp_path`), com o schem
 | Não determinismo | Desempate por prazo, MOQ e id do fornecedor |
 | Ruptura mascarada | Estoque zero com venda zero tem cobertura 0.0 e vai para o topo |
 | Compra inválida | Quantidade zero ou negativa nunca gera ordem; `estoque_maximo < estoque_minimo` vira pendência |
+| Teto do máximo | Compra nunca passa de `estoque_maximo - estoque atual` (picanha em 88 kg); o corte é sinalizado com a quantidade que a previsão pedia |
 | Previsão | Backtest de 28 dias por SKU, melhor ou igual à média fixa, nunca negativa, determinística, somente leitura |
 | Plano B | Sem histórico, histórico curto, com buracos ou corrompido: usa a média fixa e registra `fonte_demanda`, sem afetar os outros SKUs |
 | Tela | Importar e montar os dados não exige Streamlit nem chave de API |
@@ -312,7 +324,7 @@ Este projeto é uma demonstração de engenharia, não um sistema pronto para op
 - **Seis meses de histórico não capturam sazonalidade anual.** Natal, Páscoa, Dia das Mães e a virada de estação não podem ser aprendidos com 180 dias. A previsão assume que o mês seguinte se parece com as últimas semanas.
 - **Sem promoções nem feriados.** Nenhum calendário de promoções ou de feriados entra no cálculo; um feriado prolongado ou uma ação de preço distorce o histórico e a previsão.
 - **Itens de baixo giro são medidos por semana, e por quê.** Itens que vendem menos de 2 unidades por dia (o Wagyu) têm vendas inteiras e erráticas: o MAPE diário fica em torno de 31% mesmo com um bom método. Por isso o critério de aprovação deles usa os totais semanais, que é o horizonte da decisão de compra. Isso é uma exceção explícita, não um resultado melhor do que o diário. O SKU de menor margem entre os que usam o critério diário é o vinho Angelica Zapata (12,8% contra o limite de 15%).
-- **O estoque máximo não limita mais a compra.** A quantidade sugerida cobre prazo + 7 dias de demanda prevista e pode passar do `estoque_maximo` do cadastro (na demonstração, a picanha resfriada chega a 157 kg contra um máximo cadastrado de 100). Para perecíveis, isso pede validação do comprador.
+- **Na demonstração, o teto do estoque máximo anula o efeito da previsão no valor do pedido.** Os 4 itens com cotação pedem mais do que cabe (a picanha, por exemplo, pediria 157 kg contra um máximo cadastrado de 100), então todos são cortados pelo teto e o total (R$ 13.793,20) coincide com o da regra antiga "repor até o máximo". A previsão aparece na sinalização do corte, na cobertura em dias e no tamanho do corte, que indica máximos cadastrados provavelmente baixos para o prazo de entrega e o giro. Se o comprador aumentar os máximos, a previsão passa a mandar na quantidade.
 - **Sem cotação, a quantidade é um piso.** Quando não há fornecedor, não há prazo de entrega; a quantidade da pendência considera só os dias de cobertura e deve ser recalculada após a cotação.
 - **A previsão parte do último dia do histórico, não de "hoje".** Se o histórico estiver desatualizado, o motor prevê dias que já passaram. Em produção, a carga diária de vendas é pré-requisito.
 - **Fatores estimados em conjunto.** O fator do dia da semana é calculado antes do fator do salário, sobre o histórico bruto; os dois se confundem um pouco. Com 180 dias o efeito é pequeno, mas existe.
