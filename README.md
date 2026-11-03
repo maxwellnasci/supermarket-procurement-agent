@@ -33,7 +33,7 @@ O princípio central: **o LLM explica, o código decide.** Quantidades, forneced
 
 - **[ADR-0002 — Previsão de demanda na necessidade de compra](docs/adr/0002-previsao-de-demanda-na-necessidade-de-compra.md)** — a nova regra de quantidade, o plano B pela média fixa, as alternativas descartadas e as consequências.
 
-> O parecer executivo (PDF/HTML) e o ADR-0001 foram escritos **antes** da previsão de demanda e descrevem a regra anterior de quantidade (reposição até o estoque máximo, com venda média fixa). Na demonstração o teto do máximo faz as quantidades e o total do pedido coincidirem com os deles, mas a cobertura em dias pode diferir ligeiramente (agora vem da demanda prevista) e as referências de linha do ADR-0001 ao motor estão defasadas.
+> O parecer executivo (PDF/HTML) e o ADR-0001 foram escritos **antes** da previsão de demanda e descrevem a regra anterior de quantidade (reposição até o estoque máximo, com venda média fixa). Os máximos de vinho, azeite e pão sem glúten da demonstração foram aumentados depois deles, então quantidades e total do pedido (hoje R$ 15.098,10) não batem com os desses documentos, a cobertura em dias agora vem da demanda prevista e as referências de linha do ADR-0001 ao motor estão defasadas.
 
 ---
 
@@ -98,7 +98,7 @@ demanda prevista nos dias (prazo de entrega + dias de cobertura)
 limitada a (estoque máximo - estoque atual)      ← o teto sempre vale
 ```
 
-**O teto do estoque máximo vale sempre.** Se a previsão pede mais do que cabe até o `estoque_maximo` cadastrado, o motor compra só o que cabe e **registra o corte** no item: `limitado_pelo_maximo = true`, mais a `quantidade_prevista_sem_teto` (o que a previsão pedia) e o `estoque_maximo`. Assim o comprador enxerga o corte e decide se vale aumentar o máximo cadastrado. A tela mostra a coluna *Limitado pelo máximo* e o dossiê do agente expõe os mesmos campos.
+**O teto do estoque máximo vale sempre.** Na demonstração, o teto é apertado para perecíveis e folgado para não perecíveis: a picanha resfriada tem máximo de 100 kg e continua sendo cortada, enquanto vinho, azeite e pão sem glúten têm máximos que comportam a previsão. Se a previsão pede mais do que cabe até o `estoque_maximo` cadastrado, o motor compra só o que cabe e **registra o corte** no item: `limitado_pelo_maximo = true`, mais a `quantidade_prevista_sem_teto` (o que a previsão pedia) e o `estoque_maximo`. Assim o comprador enxerga o corte e decide se vale aumentar o máximo cadastrado. A tela mostra a coluna *Limitado pelo máximo* e o dossiê do agente expõe os mesmos campos.
 
 Os dias de cobertura valem 7 por padrão. O estoque mínimo continua sendo o gatilho de compra (estoque `<=` mínimo). Se o SKU não tem histórico utilizável (menos de 56 dias, buracos ou valores inválidos), o motor cai para a `venda_media_diaria` fixa do cadastro. Cada item e cada pendência registra a origem no campo `fonte_demanda` (`previsao` ou `media_fixa`), e a tela mostra essa coluna.
 
@@ -266,13 +266,12 @@ Saída do motor sobre o banco de demonstração:
 📊 Total de Itens Analisados: 7
 🚨 Itens Críticos: 5
 ⛔ Itens Bloqueados (ação humana): 1
-💰 Valor Total do Pré-Pedido: R$ 13,793.20
+💰 Valor Total do Pré-Pedido: R$ 15,098.10
 
 [PADARIA_SEM_GLUTEN] Pão Artesanal Multigãos Sem Glúten 400g
    Estoque: 4.0 un | Demanda: 6.32/dia (previsao) -> Cobertura: 0.6 dias
-   Sugestão de Compra: 36.0 un com BioPan Distribuidora Sem Glúten (R$ 13.20/un)
-   ⚠️ Limitado pelo estoque máximo (40): a previsão pedia 68 un
-   Total: R$ 475.20 | Status: 🚨 RISCO IMINENTE DE RUPTURA (Estoque acaba antes ou no dia da entrega!)
+   Sugestão de Compra: 68.0 un com BioPan Distribuidora Sem Glúten (R$ 13.20/un)
+   Total: R$ 897.60 | Status: 🚨 RISCO IMINENTE DE RUPTURA (Estoque acaba antes ou no dia da entrega!)
 
 [ACOUGUE_PARRILLA] Picanha Angus Certificada Resfriada
    Estoque: 12.0 un | Demanda: 16.07/dia (previsao) -> Cobertura: 0.7 dias
@@ -324,7 +323,7 @@ Este projeto é uma demonstração de engenharia, não um sistema pronto para op
 - **Seis meses de histórico não capturam sazonalidade anual.** Natal, Páscoa, Dia das Mães e a virada de estação não podem ser aprendidos com 180 dias. A previsão assume que o mês seguinte se parece com as últimas semanas.
 - **Sem promoções nem feriados.** Nenhum calendário de promoções ou de feriados entra no cálculo; um feriado prolongado ou uma ação de preço distorce o histórico e a previsão.
 - **Itens de baixo giro são medidos por semana, e por quê.** Itens que vendem menos de 2 unidades por dia (o Wagyu) têm vendas inteiras e erráticas: o MAPE diário fica em torno de 31% mesmo com um bom método. Por isso o critério de aprovação deles usa os totais semanais, que é o horizonte da decisão de compra. Isso é uma exceção explícita, não um resultado melhor do que o diário. O SKU de menor margem entre os que usam o critério diário é o vinho Angelica Zapata (12,8% contra o limite de 15%).
-- **Na demonstração, o teto do estoque máximo anula o efeito da previsão no valor do pedido.** Os 4 itens com cotação pedem mais do que cabe (a picanha, por exemplo, pediria 157 kg contra um máximo cadastrado de 100), então todos são cortados pelo teto e o total (R$ 13.793,20) coincide com o da regra antiga "repor até o máximo". A previsão aparece na sinalização do corte, na cobertura em dias e no tamanho do corte, que indica máximos cadastrados provavelmente baixos para o prazo de entrega e o giro. Se o comprador aumentar os máximos, a previsão passa a mandar na quantidade.
+- **Os máximos da demonstração foram escolhidos para mostrar os dois comportamentos.** Teto apertado para perecíveis, folga para não perecíveis: a picanha resfriada segue com máximo de 100 kg e é cortada (a previsão pede 157 kg, a compra é de 88 kg, sinalizada), enquanto vinho (60 un), azeite (120 un) e pão sem glúten (90 un) têm máximos que comportam a previsão e compram exatamente o que ela pede. Esses valores de máximo são inventados para a demonstração. Em operação real, um máximo muito abaixo do que a previsão pede (como o da picanha) é um sinal para o comprador revisar o cadastro ou o prazo do fornecedor.
 - **Sem cotação, a quantidade é um piso.** Quando não há fornecedor, não há prazo de entrega; a quantidade da pendência considera só os dias de cobertura e deve ser recalculada após a cotação.
 - **A previsão parte do último dia do histórico, não de "hoje".** Se o histórico estiver desatualizado, o motor prevê dias que já passaram. Em produção, a carga diária de vendas é pré-requisito.
 - **Fatores estimados em conjunto.** O fator do dia da semana é calculado antes do fator do salário, sobre o histórico bruto; os dois se confundem um pouco. Com 180 dias o efeito é pequeno, mas existe.

@@ -300,6 +300,20 @@ def test_banco_real_picanha_nao_passa_de_100_kg_e_aparece_sinalizada():
     assert wagyu.limitado_pelo_maximo is False
 
 
+def test_banco_real_so_a_picanha_perecivel_e_cortada_pelo_teto():
+    """Teto apertado para perecível, folga para não perecível: a previsão manda."""
+    relatorio = gerar_analise_pre_pedido()
+    itens = {i.sku: i for i in relatorio.itens}
+    assert {s for s, i in itens.items() if i.limitado_pelo_maximo} == {"SKU-CAR-001"}
+    # Nos demais, a compra é exatamente o que a previsão pediu
+    esperado = {"SKU-PAD-001": 68.0, "SKU-VIN-001": 31.0, "SKU-MER-002": 67.0}
+    for sku, quantidade in esperado.items():
+        assert itens[sku].quantidade_sugerida == quantidade
+        assert itens[sku].quantidade_prevista_sem_teto == quantidade
+        assert itens[sku].fonte_demanda == FonteDemanda.PREVISAO
+        assert itens[sku].estoque_maximo >= itens[sku].quantidade_atual + quantidade
+
+
 def test_dossie_expoe_o_corte_para_o_agente_explicar():
     dossie = json.loads(formatar_dossie_para_agente())
     picanha = next(i for i in dossie["itens"] if i["sku"] == "SKU-CAR-001")

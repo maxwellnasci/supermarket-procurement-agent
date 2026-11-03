@@ -95,7 +95,11 @@ def test_totais_contam_wagyu_como_critico_e_bloqueado():
     assert relatorio.total_itens_criticos == 5
     assert relatorio.total_itens_bloqueados == 1
     assert relatorio.total_itens_saudaveis == 2
-    assert relatorio.valor_total_estimado == 13793.20
+    # Ajuste (dados da demonstração): máximos de vinho, azeite e pão sem glúten
+    # aumentados, então a previsão define a compra deles e só a picanha segue
+    # cortada pelo teto de 100 kg: 68 x 13,20 + 88 x 74,50 + 31 x 185,00 +
+    # 67 x 28,50. Antes (todos cortados): 13793.20.
+    assert relatorio.valor_total_estimado == 15098.10
 
 
 def test_nenhum_sku_descartado_em_silencio():

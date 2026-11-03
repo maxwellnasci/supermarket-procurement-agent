@@ -194,12 +194,14 @@ def init_db(db_path: str = DB_PATH):
 
     # Inserir Estoque Atual (Simulando itens normais e itens em estado CRÍTICO DE RUPTURA)
     # Formato: (sku, atual, minimo, maximo, venda_diaria)
+    # Teto apertado para perecíveis (picanha resfriada: 100 kg), folga para não
+    # perecíveis (vinho, azeite, pão sem glúten): neles a previsão define a compra.
     estoque = [
         (
             "SKU-VIN-001",
             3.0,
             10.0,
-            30.0,
+            60.0,
             2.5,
         ),  # CRÍTICO! Só tem 3 garrafas e vende 2.5/dia!
         ("SKU-VIN-002", 45.0, 20.0, 60.0, 4.0),  # Saudável
@@ -215,11 +217,11 @@ def init_db(db_path: str = DB_PATH):
             "SKU-PAD-001",
             4.0,
             15.0,
-            40.0,
+            90.0,
             6.0,
         ),  # CRÍTICO! Padaria sem glúten vai romper!
         ("SKU-MER-001", 120.0, 50.0, 200.0, 12.0),  # Saudável
-        ("SKU-MER-002", 8.0, 25.0, 70.0, 5.0),  # CRÍTICO! Azeite quase acabando!
+        ("SKU-MER-002", 8.0, 25.0, 120.0, 5.0),  # CRÍTICO! Azeite quase acabando!
     ]
     cursor.executemany("INSERT INTO estoque_loja VALUES (?, ?, ?, ?, ?)", estoque)
 

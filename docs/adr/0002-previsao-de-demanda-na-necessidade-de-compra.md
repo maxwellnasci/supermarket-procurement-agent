@@ -37,9 +37,10 @@ A quantidade sugerida era "repor até o estoque máximo", usando uma `venda_medi
 
 ## Consequências
 
-- Na demonstração, o teto corta os 4 itens com cotação (picanha: previsão de 157 kg, compra de 88 kg para chegar a 100). Por isso o **total do pedido (R$ 13.793,20) coincide com o da regra antiga**: o efeito da previsão fica na sinalização, na cobertura em dias e no tamanho do corte. Cortes grandes sugerem máximos cadastrados baixos para o prazo de entrega e o giro; aumentar o máximo faz a previsão mandar na quantidade.
+- **Teto apertado para perecíveis, folga para não perecíveis.** Na demonstração, a picanha resfriada mantém o máximo de 100 kg e é cortada e sinalizada (previsão de 157 kg, compra de 88 kg para chegar a 100). Vinho (máximo 60), azeite (120) e pão sem glúten (90) receberam máximos que comportam a previsão, então compram exatamente o que ela pede (31, 67 e 68 un). O total do pedido da demonstração é R$ 15.098,10. Os máximos são valores inventados para a demonstração.
+- Um corte grande sugere máximo cadastrado baixo para o prazo de entrega e o giro; o comprador decide se o aumenta.
 - O `estoque_maximo` é validado (`estoque_maximo < estoque_minimo` é `DADO_INVALIDO`) e limita a compra.
 - Sem cotação, não há prazo de entrega: a quantidade da pendência é um **piso** (considera só a cobertura) e deve ser recalculada após a cotação.
 - Item exatamente no mínimo e sem venda prevista tem necessidade zero e conta como saudável.
-- O parecer executivo e o ADR-0001 descrevem a regra anterior; na demonstração as quantidades coincidem por causa do teto, mas a cobertura em dias e as referências de linha do ADR-0001 estão defasadas.
+- O parecer executivo e o ADR-0001 descrevem a regra anterior; os máximos da demonstração foram aumentados depois (quantidades e total divergem), a cobertura em dias agora vem da demanda prevista e as referências de linha do ADR-0001 estão defasadas.
 - O desempenho medido (MAPE por SKU) usa dados sintéticos gerados com a mesma estrutura que a previsão estima; é otimista. Ver "Limitações" no README.
