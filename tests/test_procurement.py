@@ -7,9 +7,9 @@ import pytest
 from pydantic import ValidationError
 
 from src.agent import LIMITE_TEXTO, formatar_dossie_para_agente, sanitizar_texto
-from src.skills import procurement_engine
 from src.skills.procurement_engine import (
     DIAS_SEM_GIRO,
+    FonteDemanda,
     ItemPrePedido,
     RelatorioPrePedido,
     StatusItem,
@@ -79,8 +79,12 @@ def test_wagyu_sem_cotacao_vira_pendencia():
     assert wagyu.descricao == "Bife Ancho Wagyu Fatiado 400g"
     assert wagyu.quantidade_atual == 5.0
     assert wagyu.estoque_minimo == 8.0
-    assert wagyu.dias_restantes == 2.8
-    assert wagyu.quantidade_necessaria == 20.0
+    # Ajuste (regra nova): cobertura usa a demanda PREVISTA (~1,84/dia), não a
+    # média fixa de 1,8 (5 / 1,8 = 2,8 -> 5 / 1,84 = 2,7).
+    assert wagyu.dias_restantes == 2.7
+    # Ajuste (regra nova): 7 dias de cobertura x demanda prevista + mínimo 8 - atual 5
+    # = 16, em vez de "estoque máximo 25 - atual 5 = 20".
+    assert wagyu.quantidade_necessaria == 16.0
     assert "ACOUGUE_PARRILLA" in wagyu.acao_sugerida
 
 
@@ -91,7 +95,11 @@ def test_totais_contam_wagyu_como_critico_e_bloqueado():
     assert relatorio.total_itens_criticos == 5
     assert relatorio.total_itens_bloqueados == 1
     assert relatorio.total_itens_saudaveis == 2
-    assert relatorio.valor_total_estimado == 13793.20
+    # Ajuste (dados da demonstração): máximos de vinho, azeite e pão sem glúten
+    # aumentados, então a previsão define a compra deles e só a picanha segue
+    # cortada pelo teto de 100 kg: 68 x 13,20 + 88 x 74,50 + 31 x 185,00 +
+    # 67 x 28,50. Antes (todos cortados): 13793.20.
+    assert relatorio.valor_total_estimado == 15098.10
 
 
 def test_nenhum_sku_descartado_em_silencio():
@@ -103,74 +111,6 @@ def test_nenhum_sku_descartado_em_silencio():
         + relatorio.total_itens_saudaveis
         == relatorio.total_itens_analisados
     )
-
-
-SCHEMA = """
-CREATE TABLE fornecedores (
-    id_fornecedor INTEGER PRIMARY KEY AUTOINCREMENT,
-    razao_social TEXT NOT NULL,
-    cnpj TEXT NOT NULL,
-    prazo_entrega_dias INTEGER NOT NULL,
-    pedido_minimo_reais REAL NOT NULL
-);
-CREATE TABLE produtos (
-    sku TEXT PRIMARY KEY,
-    descricao TEXT NOT NULL,
-    categoria TEXT NOT NULL,
-    unidade TEXT NOT NULL,
-    preco_venda REAL NOT NULL
-);
-CREATE TABLE estoque_loja (
-    sku TEXT PRIMARY KEY,
-    quantidade_atual REAL NOT NULL,
-    estoque_minimo REAL NOT NULL,
-    estoque_maximo REAL NOT NULL,
-    venda_media_diaria REAL NOT NULL,
-    FOREIGN KEY (sku) REFERENCES produtos(sku)
-);
-CREATE TABLE cotacoes_fornecedores (
-    id_cotacao INTEGER PRIMARY KEY AUTOINCREMENT,
-    sku TEXT NOT NULL,
-    id_fornecedor INTEGER NOT NULL,
-    preco_custo REAL NOT NULL,
-    data_cotacao DATE DEFAULT CURRENT_DATE,
-    FOREIGN KEY (sku) REFERENCES produtos(sku),
-    FOREIGN KEY (id_fornecedor) REFERENCES fornecedores(id_fornecedor)
-);
-"""
-
-
-@pytest.fixture
-def banco(tmp_path, monkeypatch):
-    """Monta um banco isolado com o schema real e aponta o motor para ele."""
-    caminho = str(tmp_path / "teste.db")
-    conexao_original = procurement_engine.get_db_connection
-
-    def criar(fornecedores, produtos, estoque, cotacoes):
-        conn = sqlite3.connect(caminho)
-        conn.executescript(SCHEMA)
-        conn.executemany(
-            "INSERT INTO fornecedores VALUES (?, ?, '00.000.000/0001-00', ?, ?)",
-            fornecedores,
-        )
-        conn.executemany(
-            "INSERT INTO produtos VALUES (?, ?, 'MERCEARIA', 'UN', 10.0)", produtos
-        )
-        conn.executemany("INSERT INTO estoque_loja VALUES (?, ?, ?, ?, ?)", estoque)
-        conn.executemany(
-            "INSERT INTO cotacoes_fornecedores (sku, id_fornecedor, preco_custo) VALUES (?, ?, ?)",
-            cotacoes,
-        )
-        conn.commit()
-        conn.close()
-        monkeypatch.setattr(
-            procurement_engine,
-            "get_db_connection",
-            lambda: conexao_original(caminho),
-        )
-        return caminho
-
-    return criar
 
 
 def test_produto_sem_estoque_cadastrado_vira_pendencia(banco):
@@ -327,8 +267,10 @@ def test_gondola_zerada_sem_venda_tem_urgencia_maxima(banco):
     assert "RUPTURA ATIVA" in itens["SKU-ZERADO"].alerta_urgencia
     assert itens["SKU-NEGATIVO"].dias_restantes == 0.0
     assert "RUPTURA ATIVA" in itens["SKU-NEGATIVO"].alerta_urgencia
-    # Saldo negativo é gôndola zerada: compra até o máximo, sem repor déficit fantasma
-    assert itens["SKU-NEGATIVO"].quantidade_sugerida == 10.0
+    # Saldo negativo é gôndola zerada: não repõe "déficit fantasma" (-3). Ajuste
+    # (regra nova): sem venda, compra só o estoque de segurança (mínimo 5), em
+    # vez de "máximo 10 - 0".
+    assert itens["SKU-NEGATIVO"].quantidade_sugerida == 5.0
     assert itens["SKU-PARADO"].dias_restantes == DIAS_SEM_GIRO
     assert {i.sku for i in relatorio.itens[:2]} == {"SKU-ZERADO", "SKU-NEGATIVO"}
 
@@ -457,8 +399,14 @@ def _item_valido(**sobrescrever):
         "quantidade_atual": 3.0,
         "estoque_minimo": 10.0,
         "venda_diaria": 2.5,
+        # Ajuste: campos novos e obrigatórios do contrato (origem da demanda e
+        # sinalização do corte pelo estoque máximo)
+        "fonte_demanda": FonteDemanda.PREVISAO,
+        "estoque_maximo": 30.0,
         "dias_restantes": 1.2,
         "quantidade_sugerida": 27.0,
+        "limitado_pelo_maximo": False,
+        "quantidade_prevista_sem_teto": 27.0,
         "fornecedor_id": 1,
         "fornecedor_nome": "Distribuidora Vinhos Nobres Ltda",
         "prazo_entrega_dias": 2,
