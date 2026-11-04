@@ -42,5 +42,5 @@ A quantidade sugerida era "repor até o estoque máximo", usando uma `venda_medi
 - O `estoque_maximo` é validado (`estoque_maximo < estoque_minimo` é `DADO_INVALIDO`) e limita a compra.
 - Sem cotação, não há prazo de entrega: a quantidade da pendência é um **piso** (considera só a cobertura) e deve ser recalculada após a cotação.
 - Item exatamente no mínimo e sem venda prevista tem necessidade zero e conta como saudável.
-- O parecer executivo e o ADR-0001 descrevem a regra anterior; os máximos da demonstração foram aumentados depois (quantidades e total divergem), a cobertura em dias agora vem da demanda prevista e as referências de linha do ADR-0001 estão defasadas.
+- O parecer executivo (`docs/parecer_executivo_rede_varejo_premium.html`/`.pdf`) e o [ADR-0001](0001-arquitetura-motor-deterministico.md) foram sincronizados com os novos números (R$ 15.098,10), a cobertura prevista e o guardrail anti-alucinação do agente.
 - O desempenho medido (MAPE por SKU) usa dados sintéticos gerados com a mesma estrutura que a previsão estima; é otimista. Ver "Limitações" no README.

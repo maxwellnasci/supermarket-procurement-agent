@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>Parecer Executivo de Compras e Operações — Rede Varejo Premium</title>
 <meta name="author" content="Arquitetura de Dados e IA — Rede Varejo Premium">
-<meta name="description" content="Pré-pedido determinístico do ciclo 31/10/2026: 5 itens críticos (4 em compra, 1 sem cotação), 4 fornecedores, R$ 13.793,20.">
+<meta name="description" content="Pré-pedido determinístico do ciclo 31/10/2026: 5 itens críticos (4 em compra, 1 sem cotação), 4 fornecedores, R$ 15.098,10.">
 <meta name="keywords" content="compras, estoque, FinOps, governança de dados, human-in-the-loop">
 <style>
   @page {
@@ -264,17 +264,17 @@
 
 <h1>Parecer Executivo de<br>Compras e Operações</h1>
 <div class="rule-gold"></div>
-<p class="lede">Pré-pedido determinístico do ciclo de 31/10/2026: quatro SKUs em ruptura iminente e um bloqueado por falta de cotação, quatro fornecedores e <strong>R$ 13.793,20</strong> a autorizar. A reposição chega <em>depois</em> da ruptura — a decisão desta noite define o fim de semana e a semana seguinte.</p>
+<p class="lede">Pré-pedido determinístico do ciclo de 31/10/2026 com previsão de demanda: quatro SKUs em ruptura iminente e um bloqueado por falta de cotação, quatro fornecedores e <strong>R$ 15.098,10</strong> a autorizar. A reposição chega <em>depois</em> da ruptura — a decisão desta noite define o fim de semana e a semana seguinte.</p>
 
 <table class="meta">
   <tr>
     <td><span class="lbl">Para</span><span class="val">Gerente de Compras<br>Diretor da Loja Conceito</span></td>
     <td><span class="lbl">De</span><span class="val">Arquitetura de Dados &amp; IA<br>Governança de Compras</span></td>
-    <td><span class="lbl">Emissão</span><span class="val">31/10/2026 · 19h45 (BRT)<br>Versão 1.0</span></td>
+    <td><span class="lbl">Emissão</span><span class="val">03/11/2026 · 19h45 (BRT)<br>Versão 2.0 (Previsão de Demanda)</span></td>
   </tr>
   <tr>
     <td><span class="lbl">Assunto</span><span class="val">Autorização de pré-pedido e plano de contenção</span></td>
-    <td><span class="lbl">Fonte</span><span class="val">Camada de governança (SQLite + motor determinístico)</span></td>
+    <td><span class="lbl">Fonte</span><span class="val">Camada de governança (SQLite + forecast + motor determinístico)</span></td>
     <td><span class="lbl">Classificação</span><span class="val">Confidencial · uso interno</span></td>
   </tr>
 </table>
@@ -283,7 +283,7 @@
   <tr>
     <td style="width:30%">
       <span class="lbl">Valor consolidado</span>
-      <span class="big">R$ 13.793,20</span>
+      <span class="big">R$ 15.098,10</span>
       <span class="small"><br>4 fornecedores · 4 POs</span>
     </td>
     <td style="width:24%">
@@ -293,7 +293,7 @@
     </td>
     <td style="width:22%">
       <span class="lbl">Cobertura mínima</span>
-      <span class="big">0,7 dia</span>
+      <span class="big">0,6 dia</span>
       <span class="small"><br>pão sem glúten · entrega D+2</span>
     </td>
     <td style="width:24%">
@@ -306,20 +306,20 @@
 
 <div class="sec-head" style="border-bottom:none; margin-bottom:5pt;">
   <span class="sec-num">01 · Sumário executivo</span>
-  <h2>A loja entra no feriado com estoque de um dia</h2>
+  <h2>A loja entra no feriado com estoque de menos de um dia</h2>
 </div>
 
 <div class="summary">
-  <div class="sum-item"><span class="idx">01</span><p><span class="t">Quatro SKUs rompem antes de qualquer entrega possível.</span> A cobertura (0,7 a 1,6 dia) é menor que o prazo de cada fornecedor (1 a 3 dias) — a aritmética do estoque contra o calendário.</p></div>
-  <div class="sum-item"><span class="idx">02</span><p><span class="t">O feriado de Finados (02/11) agrava o quadro.</span> Sem operação logística na segunda, a primeira entrega cai em 04/11. O fim de semana prolongado é exatamente o período descoberto.</p></div>
-  <div class="sum-item"><span class="idx">03</span><p><span class="t">O quinto item crítico está bloqueado, não invisível.</span> O Ancho Wagyu (SKU-CAR-002) não tem cotação e volta como pendência explícita; <strong>os R$ 13.793,20 não incluem essa reposição.</strong></p></div>
-  <div class="sum-item"><span class="idx">04</span><p><span class="t">A cotação escolheu o menor preço em 3 dos 4 itens com concorrência.</span> São <strong>R$ 1.237,00 de economia</strong> (8,2%), com uma ressalva de prazo no azeite.</p></div>
-  <div class="sum-item"><span class="idx">05</span><p><span class="t">O custo de não decidir supera o pedido.</span> Exposição de <strong>R$ 4,5 mil a R$ 7,5 mil</strong> em faturamento e risco de migração de clientes A/B.</p></div>
+  <div class="sum-item"><span class="idx">01</span><p><span class="t">Quatro SKUs rompem antes de qualquer entrega possível.</span> A cobertura prevista (0,6 a 1,6 dia) é menor que o prazo de cada fornecedor (1 a 3 dias) — a aritmética do estoque contra o calendário.</p></div>
+  <div class="sum-item"><span class="idx">02</span><p><span class="t">A previsão de demanda dimensiona a compra real; o teto protege os perecíveis.</span> Vinho (31 un), pão sem glúten (68 un) e azeite (67 un) compram o que a previsão pede; a picanha resfriada é limitada pelo estoque máximo de 100 kg (compra de 88 kg contra 157 kg previstos).</p></div>
+  <div class="sum-item"><span class="idx">03</span><p><span class="t">O quinto item crítico está bloqueado, não invisível.</span> O Ancho Wagyu (SKU-CAR-002, cobertura de 2,7 d e necessidade piso de 16 un) não tem cotação e volta como pendência explícita; <strong>os R$ 15.098,10 não incluem essa reposição.</strong></p></div>
+  <div class="sum-item"><span class="idx">04</span><p><span class="t">A cotação escolheu o menor preço nos 3 itens com concorrência.</span> São <strong>R$ 1.344,00 de economia</strong> (8,2%), com uma ressalva de prazo no azeite.</p></div>
+  <div class="sum-item"><span class="idx">05</span><p><span class="t">O custo de não decidir supera o pedido.</span> Exposição de <strong>R$ 4,5 mil a R$ 7,5 mil</strong> em faturamento imediato e risco de migração de clientes A/B.</p></div>
 </div>
 
 <div class="callout dark">
   <span class="c-title">Decisão recomendada</span>
-  <p><strong>Autorizar integralmente as 4 POs (R$ 13.793,20)</strong> e liberar alçada de contingência de <strong>R$ 1.500,00</strong> para cotação emergencial do Ancho, compra de salvamento e transferência entre lojas. O pedido garante a semana; a contingência protege o domingo.</p>
+  <p><strong>Autorizar integralmente as 4 POs (R$ 15.098,10)</strong> e liberar alçada de contingência de <strong>R$ 1.500,00</strong> para cotação emergencial do Ancho, compra de salvamento e transferência entre lojas. O pedido garante a semana; a contingência protege o domingo.</p>
 </div>
 
 <p class="footnote">*Cinco dos sete SKUs analisados estão abaixo do mínimo. O quinto (SKU-CAR-002) não tem cotação e é tratado na seção 6.</p>
@@ -338,7 +338,7 @@
       <th style="width:32%">Item</th>
       <th class="num" style="width:13%">Estoque/mín.</th>
       <th class="num" style="width:11%">Cobertura</th>
-      <th class="num" style="width:14%">Déficit</th>
+      <th class="num" style="width:14%">Qtd. compra</th>
       <th class="num" style="width:10%">Valor (R$)</th>
       <th style="width:10%">Status</th>
     </tr>
@@ -347,36 +347,36 @@
     <tr>
       <td><span class="sku">SKU-PAD-001</span><br><span class="item-name">Pão Sem Glúten 400g</span></td>
       <td class="num">4 / 15 un</td>
-      <td class="num"><strong>0,7 vs 2 d</strong></td>
-      <td class="num">20 un</td><td class="num">475,20</td>
+      <td class="num"><strong>0,6 vs 2 d</strong></td>
+      <td class="num">68 un</td><td class="num">897,60</td>
       <td><span class="badge b-red">Ruptura</span></td>
     </tr>
     <tr class="alt">
       <td><span class="sku">SKU-CAR-001</span><br><span class="item-name">Picanha Angus</span></td>
       <td class="num">12 / 40 kg</td>
-      <td class="num"><strong>0,8 vs 1 d</strong></td>
-      <td class="num">33 kg</td><td class="num">6.556,00</td>
+      <td class="num"><strong>0,7 vs 1 d</strong></td>
+      <td class="num">88 kg*</td><td class="num">6.556,00</td>
       <td><span class="badge b-red">Ruptura</span></td>
     </tr>
     <tr>
       <td><span class="sku">SKU-VIN-001</span><br><span class="item-name">Vinho Angelica 750ml</span></td>
       <td class="num">3 / 10 un</td>
-      <td class="num"><strong>1,2 vs 2 d</strong></td>
-      <td class="num">7 un</td><td class="num">4.995,00</td>
+      <td class="num"><strong>1,1 vs 2 d</strong></td>
+      <td class="num">31 un</td><td class="num">5.735,00</td>
       <td><span class="badge b-red">Ruptura</span></td>
     </tr>
     <tr class="alt">
       <td><span class="sku">SKU-MER-002</span><br><span class="item-name">Azeite Extra Virgem</span></td>
       <td class="num">8 / 25 un</td>
       <td class="num"><strong>1,6 vs 3 d</strong></td>
-      <td class="num">17 un</td><td class="num">1.767,00</td>
+      <td class="num">67 un</td><td class="num">1.909,50</td>
       <td><span class="badge b-red">Ruptura</span></td>
     </tr>
     <tr>
       <td><span class="sku">SKU-CAR-002</span><br><span class="item-name">Ancho Wagyu 400g</span></td>
       <td class="num">5 / 8 un</td>
-      <td class="num">2,8 d</td>
-      <td class="num">—</td><td class="num">a cotar</td>
+      <td class="num">2,7 d</td>
+      <td class="num">16 un (piso)</td><td class="num">a cotar</td>
       <td><span class="badge b-amber">A cotar</span></td>
     </tr>
     <tr class="alt">
@@ -395,30 +395,30 @@
     </tr>
   </tbody>
 </table>
-<p style="text-align:right; font-family:'DejaVu Sans',sans-serif; font-size:8.4pt; color:#0E3B2E; margin:2pt 0 3pt 0;">4 SKUs no pré-pedido &nbsp;·&nbsp; <strong>R$ 13.793,20</strong></p>
-<p class="footnote">Déficit calculado sobre a janela conservadora (feriado de Finados): demanda diária × dias até a primeira entrega possível, descontado o estoque atual. Para o SKU-CAR-002 não há cotação cadastrada, logo não há valor nem prazo.</p>
+<p style="text-align:right; font-family:'DejaVu Sans',sans-serif; font-size:8.4pt; color:#0E3B2E; margin:2pt 0 3pt 0;">4 SKUs no pré-pedido &nbsp;·&nbsp; <strong>R$ 15.098,10</strong></p>
+<p class="footnote">*A previsão pedia 157 kg para a Picanha Angus (demanda de 16,07 kg/dia em 8 dias + segurança de 40 kg − 12 kg atuais), mas o motor limitou a compra a 88 kg para respeitar o estoque máximo cadastrado de 100 kg (<span class="mono">limitado_pelo_maximo = true</span>). Para o SKU-CAR-002 não há cotação cadastrada; os 16 un são um piso calculado sem prazo de entrega.</p>
 
 <div class="chart">
-  <div class="chart-title">Cobertura de estoque × prazo de entrega (dias)</div>
+  <div class="chart-title">Cobertura prevista × prazo de entrega (dias)</div>
   <div class="legend">
-    <span><span class="sw" style="background:#B3261E"></span>Cobertura atual</span>
+    <span><span class="sw" style="background:#B3261E"></span>Cobertura atual (demanda prevista)</span>
     <span><span class="sw" style="background:#DAD3C3"></span>Prazo do fornecedor</span>
   </div>
 
   <div class="bar-line">
     <div class="bar-lab">Pão sem glúten<span class="sub">BioPan · 2 dias</span></div>
-    <div class="bar-track"><div class="bar-lead" style="width:66.7%"></div><div class="bar-cover" style="width:23.3%"></div></div>
-    <div class="bar-val">0,7 vs 2 d</div>
+    <div class="bar-track"><div class="bar-lead" style="width:66.7%"></div><div class="bar-cover" style="width:20.0%"></div></div>
+    <div class="bar-val">0,6 vs 2 d</div>
   </div>
   <div class="bar-line">
     <div class="bar-lab">Picanha Angus<span class="sub">Carnes Nobres · 1 dia</span></div>
-    <div class="bar-track"><div class="bar-lead" style="width:33.3%"></div><div class="bar-cover" style="width:26.7%"></div></div>
-    <div class="bar-val">0,8 vs 1 d</div>
+    <div class="bar-track"><div class="bar-lead" style="width:33.3%"></div><div class="bar-cover" style="width:23.3%"></div></div>
+    <div class="bar-val">0,7 vs 1 d</div>
   </div>
   <div class="bar-line">
     <div class="bar-lab">Vinho Malbec<span class="sub">Vinhos Nobres · 2 dias</span></div>
-    <div class="bar-track"><div class="bar-lead" style="width:66.7%"></div><div class="bar-cover" style="width:40%"></div></div>
-    <div class="bar-val">1,2 vs 2 d</div>
+    <div class="bar-track"><div class="bar-lead" style="width:66.7%"></div><div class="bar-cover" style="width:36.7%"></div></div>
+    <div class="bar-val">1,1 vs 2 d</div>
   </div>
   <div class="bar-line">
     <div class="bar-lab">Azeite português<span class="sub">Central Alimentos · 3 dias</span></div>
@@ -428,9 +428,9 @@
 </div>
 
 <h3><span class="n">2.1</span> Três leituras que importam</h3>
-<p><strong>O problema é estrutural, não pontual.</strong> 71% do mix monitorado está abaixo do mínimo. Quatro itens chegam ao relatório já sem margem de segurança — ou seja, o ponto de reposição está sendo acionado tarde, quando o estoque já não cobre o prazo de entrega. O estoque mínimo atual funciona como piso contábil, não como ponto de pedido.</p>
-<p><strong>O capital está concentrado em um único SKU.</strong> A picanha responde por 47,5% do valor do pedido (R$ 6.556,00). Isso é coerente com o giro, mas concentra o risco: qualquer falha do Frigorífico Carnes Nobres compromete metade do plano.</p>
-<p><strong>Não há folga para o feriado.</strong> A cobertura foi calculada com a média diária plana. Em fim de semana prolongado, a venda de picanha e de itens de padaria tende a ficar acima da média; se o fim de semana vender 1,5× a média, a cobertura real da picanha cai para cerca de <strong>0,5 dia</strong> — menos de meio dia de operação.</p>
+<p><strong>O problema é estrutural, não pontual.</strong> 71% do mix monitorado está abaixo do mínimo. Quatro itens chegam ao relatório já sem margem de segurança — ou seja, o ponto de reposição está sendo acionado tarde, quando o estoque já não cobre o prazo de entrega. O estoque mínimo atual funciona como gatilho contábil, não como ponto de pedido antecipado.</p>
+<p><strong>O teto protege perecíveis e expõe gargalo de cadastro.</strong> A picanha responde por 43,4% do valor do pedido (R$ 6.556,00) e foi cortada pelo teto de 100 kg (a previsão pedia 157 kg). O comprador enxerga o corte explicitamente no relatório e decide se revisa a capacidade de câmara fria ou a frequência de entrega.</p>
+<p><strong>A previsão captura o efeito de calendário e salário.</strong> Com a demanda prevista por dia da semana e início de mês (dias 1 a 10), a demanda diária da picanha sobe de 15,0 para 16,07 kg/dia e a do pão sem glúten de 6,0 para 6,32 un/dia, reduzindo a cobertura real para <strong>0,7 e 0,6 dia</strong>.</p>
 
 <div class="callout red">
   <span class="c-title">Conclusão do diagnóstico</span>
@@ -441,18 +441,18 @@
 
 <div class="sec-head">
   <span class="sec-num">03 · Alerta crítico</span>
-  <h2>Por que a ruptura atinge clientes A/B no na região da loja</h2>
+  <h2>Por que a ruptura atinge clientes A/B na região da loja</h2>
   <p>Dois itens, dois mecanismos de perda: um de restrição alimentar, outro de compra de destino. Ambos com custo desproporcional ao valor de gôndola.</p>
 </div>
 
 <h3><span class="n">3.1</span> Pão sem glúten: a ruptura de um item de restrição, não de preferência</h3>
-<p>O cliente celíaco ou intolerante ao glúten não substitui o pão por outro produto da mesma categoria. A alternativa real é <em>outra loja</em>. Com 4 unidades em gôndola, a padaria atende cerca de quatro clientes e para — provavelmente antes do fim da manhã de domingo. O SKU representa apenas 3,4% do valor do pedido, mas é a porta de entrada de uma cesta saudável e gourmet que inclui azeite, vinhos e itens especiais.</p>
+<p>O cliente celíaco ou intolerante ao glúten não substitui o pão por outro produto da mesma categoria. A alternativa real é <em>outra loja</em>. Com 4 unidades em gôndola (demanda prevista de 6,32/dia), a padaria atende cerca de quatro clientes e para — provavelmente antes do fim da manhã de domingo. O SKU representa 5,9% do valor do pedido (R$ 897,60 para 68 unidades), mas é a porta de entrada de uma cesta saudável e gourmet que inclui azeite, vinhos e itens especiais.</p>
 <p>É um cliente de compra recorrente e previsível. Quando encontra a gôndola vazia em um fim de semana, ele não registra “falta momentânea”: registra que a loja não é confiável para a sua restrição. A recuperação exige convencê-lo a voltar, e a decisão de retorno raramente acontece na semana seguinte.</p>
 
 <h3><span class="n">3.2</span> Picanha Angus: a compra de destino do domingo</h3>
 <p>A picanha é o que o varejo chama de compra de destino: o cliente sai de casa para comprá-la. Se ela não está disponível, ele não troca por outro corte na mesma loja — leva o churrasco inteiro (carne, carvão, cerveja, acompanhamentos) para o concorrente. A perda não é de 1 kg de carne; é da cesta associada e da venda do fim de semana.</p>
-<p>Com 12 kg, a loja atende aproximadamente 8 a 10 famílias (1,2 a 1,5 kg por família). Depois disso, a gôndola fica vazia até quarta-feira, dia 04/11. E o calendário joga contra: o feriado de Finados transforma o domingo em véspera de feriado, com movimento de churrasco acima do normal. A média de 15 kg/dia subestima a demanda justamente nos dois dias mais relevantes.</p>
-<p>Para o público A/B do da região, o custo de trocar de loja é baixo — deslocamento curto, oferta próxima e alta exigência de sortimento. Esses clientes toleram preço; não toleram ausência recorrente do item âncora. É o perfil em que uma ruptura de fim de semana custa mais em retenção do que em margem.</p>
+<p>Com 12 kg, a loja atende aproximadamente 8 a 10 famílias (1,2 a 1,5 kg por família). Depois disso, a gôndola fica vazia até quarta-feira, dia 04/11. A previsão de demanda aponta 16,07 kg/dia nos próximos 8 dias em função do fim de semana e do início do mês (efeito salário nos dias 1 a 10).</p>
+<p>Para o público A/B da região, o custo de trocar de loja é baixo — deslocamento curto, oferta próxima e alta exigência de sortimento. Esses clientes toleram preço; não toleram ausência recorrente do item âncora. É o perfil em que uma ruptura de fim de semana custa mais em retenção do que em margem.</p>
 
 <h3><span class="n">3.3</span> Quanto está em jogo</h3>
 <table class="data">
@@ -474,24 +474,24 @@
     <tr class="total"><td>Total exposto</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">R$ 7.526,00</td></tr>
   </tbody>
 </table>
-<p class="footnote">Cenário conservador: primeira entrega na quarta (04/11) para carne, quinta (05/11) para pão e vinho, sexta (06/11) para azeite. Se houver operação no feriado, a exposição cai para <strong>R$ 4.533,60</strong>. A conta usa média diária plana e não desconta substituição interna — trata-se, portanto, de um piso de exposição, não de uma projeção de perda contábil.</p>
+<p class="footnote">Cenário conservador: primeira entrega na quarta (04/11) para carne, quinta (05/11) para pão e vinho, sexta (06/11) para azeite. Se houver operação no feriado, a exposição cai para <strong>R$ 4.533,60</strong>. A conta não desconta substituição interna — trata-se, portanto, de um piso de exposição, não de uma projeção de perda contábil.</p>
 
-<p>Parte dessa demanda migra para substitutos dentro da loja (Casillero del Diablo, Bife Ancho, arroz premium), o que reduz a perda de faturamento. O efeito que não se recupera é o comportamental: o cliente que encontrou a gôndola vazia no feriado ajusta a próxima compra. Para dimensionar a ordem de grandeza, cada cliente A/B com ticket de R$ 480 a R$ 650 e duas a três compras por mês representa <strong>R$ 11,5 mil a R$ 23,4 mil por ano</strong> — de 0,8 a 1,7 vez o valor do pedido inteiro. <em>Premissa ilustrativa, a validar com o CRM; não integra a base determinística.</em></p>
+<p>Parte dessa demanda migra para substitutos dentro da loja (Casillero del Diablo, Bife Ancho, arroz premium), o que reduz a perda de faturamento. O efeito que não se recupera é o comportamental: o cliente que encontrou a gôndola vazia no feriado ajusta a próxima compra. Para dimensionar a ordem de grandeza, cada cliente A/B com ticket de R$ 480 a R$ 650 e duas a três compras por mês representa <strong>R$ 11,5 mil a R$ 23,4 mil por ano</strong> — de 0,8 a 1,5 vez o valor do pedido inteiro. <em>Premissa ilustrativa, a validar com o CRM; não integra a base determinística.</em></p>
 
 <div class="callout">
   <span class="c-title">O ponto central</span>
-  <p>O pedido de R$ 13.793,20 <strong>não evita a ruptura do fim de semana</strong> — ele evita a ruptura da semana. Entre a autorização e a primeira entrega há pelo menos três dias sem produto. É por isso que a recomendação inclui contenção imediata, e não apenas a compra.</p>
+  <p>O pedido de R$ 15.098,10 <strong>não evita a ruptura do fim de semana</strong> — ele evita a ruptura da semana. Entre a autorização e a primeira entrega há pelo menos três dias sem produto. É por isso que a recomendação inclui contenção imediata, e não apenas a compra.</p>
 </div>
 
 <!-- ============================== 04 FINOPS ============================== -->
 
 <div class="sec-head">
   <span class="sec-num">04 · FinOps de compras</span>
-  <h2>R$ 1.237,00 economizados — e onde a conta ainda não fecha</h2>
+  <h2>R$ 1.344,00 economizados — e onde a conta ainda não fecha</h2>
   <p>Seleção determinística de menor preço de custo, com trilha auditável. A economia é real, mas o critério tem um ponto cego de prazo.</p>
 </div>
 
-<p>Para cada SKU, o motor consulta todas as cotações válidas, ordena por preço de custo e seleciona a primeira. O resultado é reprodutível e verificável: a mesma base produz o mesmo pedido, sem intervenção humana e sem espaço para alucinação de preço. A escolha do vinho e da picanha é coberta por teste automatizado, o que impede regressão silenciosa do critério.</p>
+<p>Para cada SKU, o motor consulta todas as cotações válidas, ordena por preço de custo, prazo, MOQ e ID, e seleciona a primeira. O resultado é reprodutível e verificável: a mesma base produz o mesmo pedido, sem intervenção humana e sem espaço para alucinação de preço. A escolha do vinho e da picanha é coberta por teste automatizado, o que impede regressão silenciosa do critério.</p>
 
 <table class="data">
   <thead>
@@ -506,15 +506,15 @@
   </thead>
   <tbody>
     <tr>
-      <td>Vinho Malbec</td>
+      <td>Vinho Malbec (31 un)</td>
       <td>Vinhos Nobres <span class="badge b-green">D+2</span></td>
       <td class="num">185,00</td>
       <td>Central Alimentos · 210,00</td>
       <td class="num">25,00</td>
-      <td class="num"><strong>675,00</strong><br><span class="note">11,9%</span></td>
+      <td class="num"><strong>775,00</strong><br><span class="note">11,9%</span></td>
     </tr>
     <tr class="alt">
-      <td>Picanha Angus</td>
+      <td>Picanha Angus (88 kg)</td>
       <td>Carnes Nobres <span class="badge b-green">D+1</span></td>
       <td class="num">74,50</td>
       <td>Central Alimentos · 79,90</td>
@@ -522,15 +522,15 @@
       <td class="num"><strong>475,20</strong><br><span class="note">6,8%</span></td>
     </tr>
     <tr>
-      <td>Azeite extra virgem</td>
+      <td>Azeite extra virgem (67 un)</td>
       <td>Central Alimentos <span class="badge b-amber">D+3</span></td>
       <td class="num">28,50</td>
       <td>Vinhos Nobres · 29,90</td>
       <td class="num">1,40</td>
-      <td class="num"><strong>86,80</strong><br><span class="note">4,7%</span></td>
+      <td class="num"><strong>93,80</strong><br><span class="note">4,7%</span></td>
     </tr>
     <tr class="alt">
-      <td>Pão sem glúten</td>
+      <td>Pão sem glúten (68 un)</td>
       <td>BioPan <span class="badge b-green">D+2</span></td>
       <td class="num">13,20</td>
       <td>fornecedor único</td>
@@ -538,8 +538,8 @@
       <td class="num">—<br><span class="note">sem comparativo</span></td>
     </tr>
     <tr class="total">
-      <td colspan="5">Economia total vs. pior cotação disponível (R$ 15.030,20)</td>
-      <td class="num">R$ 1.237,00<br><span class="note" style="font-weight:normal">8,2% vs. pior</span></td>
+      <td colspan="5">Economia total vs. pior cotação disponível (R$ 16.442,10)</td>
+      <td class="num">R$ 1.344,00<br><span class="note" style="font-weight:normal">8,2% vs. pior</span></td>
     </tr>
   </tbody>
 </table>
@@ -560,7 +560,7 @@
 </td><td>
   <h3 style="margin-top:4pt"><span class="n">4.2</span> Onde o critério tem limite</h3>
   <ul>
-    <li><strong>Azeite:</strong> a cotação mais barata é a mais lenta (D+3 contra D+2). A economia de R$ 86,80 vem acompanhada de um dia adicional de exposição — e o item tem o maior prazo de entrega.</li>
+    <li><strong>Azeite:</strong> a cotação mais barata é a mais lenta (D+3 contra D+2). A economia de R$ 93,80 vem acompanhada de um dia adicional de exposição — e o item tem o maior prazo de entrega.</li>
     <li><strong>Custo landed:</strong> frete, substituição tributária e bonificações não estão na base. O valor é estimado, não final.</li>
     <li><strong>Validade:</strong> as cotações são de 31/10 e não têm prazo formal de validade cadastrado.</li>
   </ul>
@@ -577,7 +577,7 @@
   <p>Quatro ordens de compra, entrega escalonada por fornecedor e um plano de contenção para as 72 horas sem estoque.</p>
 </div>
 
-<p>A camada de IA não executa compras. Ela prepara, calcula e submete; a emissão da ordem é ato humano, com registro de quem autorizou, quando e em que condições. O pedido abaixo está pronto para transmissão — depende apenas desta autorização.</p>
+<p>A camada de IA não executa compras. Ela prepara, calcula, valida via guardrail anti-alucinação e submete; a emissão da ordem é ato humano, com registro de quem autorizou, quando e em que condições. O pedido abaixo está pronto para transmissão — depende apenas desta autorização.</p>
 
 <table class="data">
   <thead>
@@ -594,7 +594,7 @@
     <tr>
       <td><strong>PO-01</strong></td>
       <td>Frigorífico Carnes Nobres</td>
-      <td>Picanha Angus · 88 kg</td>
+      <td>Picanha Angus · 88 kg (teto 100)</td>
       <td class="num">R$ 6.556,00</td>
       <td class="num">D+1</td>
       <td><strong>qua 04/11</strong></td>
@@ -602,30 +602,30 @@
     <tr class="alt">
       <td><strong>PO-02</strong></td>
       <td>Distribuidora Vinhos Nobres Ltda</td>
-      <td>Angelica Zapata · 27 un</td>
-      <td class="num">R$ 4.995,00</td>
+      <td>Angelica Zapata · 31 un</td>
+      <td class="num">R$ 5.735,00</td>
       <td class="num">D+2</td>
       <td><strong>qui 05/11</strong></td>
     </tr>
     <tr>
       <td><strong>PO-03</strong></td>
       <td>BioPan Distribuidora Sem Glúten</td>
-      <td>Pão multigrãos · 36 un</td>
-      <td class="num">R$ 475,20</td>
+      <td>Pão multigrãos · 68 un</td>
+      <td class="num">R$ 897,60</td>
       <td class="num">D+2</td>
       <td><strong>qui 05/11</strong></td>
     </tr>
     <tr class="alt">
       <td><strong>PO-04</strong></td>
       <td>Distribuidora Central Alimentos</td>
-      <td>Azeite extra virgem · 62 un</td>
-      <td class="num">R$ 1.767,00</td>
+      <td>Azeite extra virgem · 67 un</td>
+      <td class="num">R$ 1.909,50</td>
       <td class="num">D+3</td>
       <td><strong>sex 06/11</strong></td>
     </tr>
     <tr class="total">
       <td colspan="3">Total do pré-pedido</td>
-      <td class="num">R$ 13.793,20</td>
+      <td class="num">R$ 15.098,10</td>
       <td class="num">—</td>
       <td>—</td>
     </tr>
@@ -692,14 +692,14 @@
     <tr>
       <td><strong>A</strong><br><span style="font-family:'DejaVu Sans',sans-serif;font-size:5.8pt;letter-spacing:0.2pt;color:#0E3B2E">RECOMENDADA</span></td>
       <td>Autorizar as 4 POs + alçada de contingência de R$ 1.500,00</td>
-      <td class="num">R$ 13.793,20<br><span class="note">+ R$ 1.500,00</span></td>
-      <td>Reposição completa, melhor preço e plano de contenção ativo. Cobertura pós-entrega de 6,7 a 14 dias.</td>
+      <td class="num">R$ 15.098,10<br><span class="note">+ R$ 1.500,00</span></td>
+      <td>Reposição baseada na previsão de demanda, melhor preço e plano de contenção ativo. Cobertura pós-entrega de 7 dias + segurança (exceto picanha, limitada pelo teto de 100 kg).</td>
     </tr>
     <tr class="alt">
       <td><strong>B</strong></td>
       <td>Autorizar apenas prioridade 1 (picanha + pão)</td>
-      <td class="num">R$ 7.031,20</td>
-      <td>Protege os itens âncora, mas deixa vinho e azeite sem reposição — 49% do valor do pedido (R$&nbsp;6.762,00).</td>
+      <td class="num">R$ 7.453,60</td>
+      <td>Protege os itens âncora, mas deixa vinho e azeite sem reposição — 50,6% do valor do pedido (R$&nbsp;7.644,50).</td>
     </tr>
     <tr>
       <td><strong>C</strong></td>
@@ -712,7 +712,7 @@
 
 <div class="approve">
   <div class="t">Termo de autorização — Parecer nº 2026-10-31-RVP</div>
-  <div class="chk"><span class="box"></span><strong>Autorizo integralmente</strong> a emissão das 4 POs, no valor de R$ 13.793,20, e a alçada de contingência de R$ 1.500,00.</div>
+  <div class="chk"><span class="box"></span><strong>Autorizo integralmente</strong> a emissão das 4 POs, no valor de R$ 15.098,10, e a alçada de contingência de R$ 1.500,00.</div>
   <div class="chk"><span class="box"></span><strong>Autorizo parcialmente</strong> as POs indicadas abaixo, no valor de R$ ______________________.</div>
   <div class="chk"><span class="box"></span><strong>Requeiro revisão</strong> antes da emissão. Motivo: __________________________________________</div>
   <div class="chk" style="margin-top:6pt">Condições adicionais: __________________________________________________________________________</div>
@@ -754,10 +754,10 @@
 <div class="sec-head">
   <span class="sec-num">06 · Governança e arquitetura</span>
   <h2>Achados de auditoria e correções necessárias</h2>
-  <p>O motor está correto no que calcula. O que falta é calendário, critério de custo total e ponto de pedido.</p>
+  <p>O motor está correto no que calcula. O que falta é calendário de feriados, critério de custo total e estoque de segurança estatístico.</p>
 </div>
 
-<p>Antes de autorizar, é preciso registrar o principal achado desta auditoria: <strong>o quinto item crítico não está no valor total</strong>. O SKU-CAR-002 (Bife Ancho Wagyu, 5 un contra mínimo de 8) não tem cotação válida e o motor o devolve como pendência <span class="mono">SEM_COTACAO</span>, com ação sugerida de cotação emergencial — mas seus 20 un ficam fora dos R$ 13.793,20. O relatório está correto e completo; o valor é que é um piso.</p>
+<p>Antes de autorizar, é preciso registrar o principal achado desta auditoria: <strong>o quinto item crítico não está no valor total</strong>. O SKU-CAR-002 (Bife Ancho Wagyu, 5 un contra mínimo de 8, cobertura prevista de 2,7 d) não tem cotação válida e o motor o devolve como pendência <span class="mono">SEM_COTACAO</span>, com ação sugerida de cotação emergencial — mas seus 16 un (piso sem prazo de entrega) ficam fora dos R$ 15.098,10. O relatório está correto e completo; o valor é que é um piso.</p>
 
 <table class="data">
   <thead>
@@ -772,8 +772,8 @@
   <tbody>
 <tr class="alt">
       <td><span class="badge b-red">P0</span></td>
-      <td><strong>Prazo em dias corridos, sem calendário</strong></td>
-      <td>O motor compara cobertura com prazo sem considerar feriados e fins de semana. Finados (02/11) desloca todas as entregas.</td>
+      <td><strong>Prazo em dias corridos, sem calendário de feriados</strong></td>
+      <td>O motor compara cobertura prevista com prazo sem considerar feriados. Finados (02/11) desloca todas as entregas.</td>
       <td>Tabela de feriados e dias úteis, cutoff de pedido e SLA por fornecedor.</td>
       <td>15 dias</td>
     </tr>
@@ -787,21 +787,21 @@
 <tr>
       <td><span class="badge b-amber">P1</span></td>
       <td><strong>Pendência de cotação fora do valor total</strong></td>
-      <td>O Ancho Wagyu entra como <span class="mono">SEM_COTACAO</span> e com ação sugerida, mas seus 20 un não estão nos R$ 13.793,20. O valor autorizado é um piso.</td>
+      <td>O Ancho Wagyu entra como <span class="mono">SEM_COTACAO</span> e com ação sugerida, mas seus 16 un (piso) não estão nos R$ 15.098,10. O valor autorizado é um piso.</td>
       <td>Reservar alçada para a cotação emergencial e acompanhar a pendência até o fechamento do pedido.</td>
       <td>Hoje</td>
     </tr>
 <tr class="alt">
       <td><span class="badge b-amber">P1</span></td>
-      <td><strong>Estoque mínimo não é ponto de pedido</strong></td>
-      <td><span class="mono">procurement_engine.py:74</span> — a compra dispara em <span class="mono">qtd ≤ mínimo</span>, sem estoque de segurança por prazo. Os quatro itens em compra já chegam sem folga.</td>
-      <td>Ponto de pedido = venda média × prazo + estoque de segurança (desvio da demanda), com uplift de fim de semana.</td>
+      <td><strong>Gatilho de compra e teto de picanha</strong></td>
+      <td><span class="mono">procurement_engine.py:284</span> — a compra dispara em <span class="mono">qtd ≤ mínimo</span>, e o teto de 100 kg corta a picanha (88 kg comprados contra 157 kg previstos).</td>
+      <td>Ponto de pedido estatístico (<span class="mono">ROP = d̄·L + z·σ</span>) e revisão do estoque máximo de perecíveis de alto giro.</td>
       <td>30 dias</td>
     </tr>
 <tr>
       <td><span class="badge b-muted">P2</span></td>
       <td><strong>Quantidade sem múltiplo de caixa</strong></td>
-      <td>27 garrafas de vinho não respeitam caixa de 6; 88 kg de picanha dependem do fracionamento do fornecedor.</td>
+      <td>31 garrafas de vinho não respeitam caixa de 6; 88 kg de picanha dependem do fracionamento do fornecedor.</td>
       <td>Arredondar por múltiplo de embalagem e validar MOQ no código, não na planilha.</td>
       <td>45 dias</td>
     </tr>
@@ -816,7 +816,7 @@
 </table>
 
 <h3><span class="n">6.1</span> O que já está sob controle</h3>
-<p>Vale registrar o que a camada faz bem, para não corrigir o que não está quebrado: o cálculo é determinístico e reproduzível; o contrato de saída é validado por Pydantic v2 em modo estrito; 36 testes cobrem preço inválido, MOQ, dado corrompido e prompt injection; itens sem cotação viram pendência explícita, nunca descarte silencioso; e o SQLite opera em WAL com foreign keys. Não há inferência probabilística no valor do pedido — o que existe é aritmética verificável. A correção necessária é de <strong>critério de decisão</strong> (prazo, custo total e ponto de pedido), não de modelo.</p>
+<p>Vale registrar o que a camada faz bem, para não corrigir o que não está quebrado: o cálculo e a previsão de demanda (<span class="mono">forecast.py</span>) são determinísticos e reproduzíveis; o contrato de saída é validado por Pydantic v2 em modo estrito; 141 testes cobrem previsão, teto de estoque, preço inválido, MOQ, dado corrompido, prompt injection e guardrail anti-alucinação do agente (<span class="mono">validar_parecer_contra_dossie</span>); itens sem cotação viram pendência explícita, nunca descarte silencioso; e o SQLite opera em WAL com foreign keys. Não há inferência probabilística opaca no valor do pedido — o que existe é aritmética verificável.</p>
 
 <!-- ============================== 07 ANEXO ============================== -->
 <div class="page-break"></div>
@@ -830,7 +830,7 @@
   <h3 style="margin-top:2pt"><span class="n">7.1</span> Premissas</h3>
   <ul class="note" style="font-size:7.8pt">
     <li>Dados sintéticos de demonstração; marca, loja e fornecedores são fictícios.</li>
-    <li>A venda diária é média plana e não captura o pico de fim de semana e feriado.</li>
+    <li>A previsão de demanda usa média móvel de 4 semanas com fatores de dia da semana e início de mês (salário, dias 1 a 10) sobre 180 dias de histórico.</li>
     <li>Prazos são tratados como dias úteis a partir do processamento; 02/11 é feriado nacional (Finados).</li>
     <li>Preços de custo não incluem frete, ST, bonificação ou devolução.</li>
     <li>Cotações de 31/10/2026, sem validade formal cadastrada.</li>
@@ -840,11 +840,11 @@
 </td><td>
   <h3 style="margin-top:2pt"><span class="n">7.2</span> Rastreabilidade</h3>
   <ul class="note" style="font-size:7.8pt">
-    <li><strong>Fonte:</strong> <span class="mono">data/retail_store.db</span> — tabelas <span class="mono">produtos</span>, <span class="mono">estoque_loja</span>, <span class="mono">cotacoes_fornecedores</span>, <span class="mono">fornecedores</span>.</li>
-    <li><strong>Motor:</strong> <span class="mono">src/skills/procurement_engine.py</span> · função <span class="mono">gerar_analise_pre_pedido()</span>.</li>
-    <li><strong>Contrato:</strong> <span class="mono">RelatorioPrePedido</span> (Pydantic).</li>
-    <li><strong>Testes:</strong> <span class="mono">tests/test_procurement.py</span> — 36 casos, incluindo cotação, MOQ, dados corrompidos e prompt injection.</li>
-    <li><strong>Ciclo:</strong> 31/10/2026 · 7 SKUs · 4 fornecedores.</li>
+    <li><strong>Fonte:</strong> <span class="mono">data/retail_store.db</span> — tabelas <span class="mono">produtos</span>, <span class="mono">estoque_loja</span>, <span class="mono">cotacoes_fornecedores</span>, <span class="mono">fornecedores</span>, <span class="mono">vendas_diarias</span>.</li>
+    <li><strong>Previsão e Motor:</strong> <span class="mono">src/skills/forecast.py</span> e <span class="mono">src/skills/procurement_engine.py</span>.</li>
+    <li><strong>Agente e Guardrail:</strong> <span class="mono">src/agent.py</span> · contratos <span class="mono">RelatorioPrePedido</span> e <span class="mono">ParecerExecutivo</span> (Pydantic v2 strict).</li>
+    <li><strong>Testes:</strong> 141 casos automatizados cobrindo motor, backtest de previsão, tela Streamlit, prompt injection e guardrail anti-alucinação.</li>
+    <li><strong>Ciclo:</strong> 31/10/2026 · 7 SKUs · 4 fornecedores · R$ 15.098,10.</li>
   </ul>
 </td></tr></table>
 </div>
@@ -853,7 +853,7 @@
 <h3 style="margin-top:12pt"><span class="n">7.3</span> Glossário</h3>
 <div class="two-col">
 <table><tr><td>
-  <p class="note" style="margin-bottom:4pt"><strong>Cobertura</strong> — estoque atual dividido pela venda média diária. Indica por quantos dias a loja vende sem reposição.</p>
+  <p class="note" style="margin-bottom:4pt"><strong>Cobertura</strong> — estoque atual dividido pela demanda diária prevista (ou média fixa no plano B). Indica por quantos dias a loja vende sem reposição.</p>
   <p class="note" style="margin-bottom:4pt"><strong>Ponto de pedido</strong> — nível de estoque que dispara a compra considerando o prazo de entrega e a segurança contra variação de demanda.</p>
   <p class="note" style="margin-bottom:4pt"><strong>Lead time</strong> — intervalo entre o pedido e a disponibilidade do produto na loja.</p>
 </td><td>
@@ -865,7 +865,7 @@
 
 <div class="divider"></div>
 <p class="note" style="margin-bottom:2pt"><strong>Impressão digital do relatório (SHA-256):</strong></p>
-<p class="mono" style="font-size:6.8pt; word-break:break-all; margin:0 0 8pt 0; color:#4A544D">73a9cf5175dfc5a6beb23602d1759da0dde07ee8a1dd1a937fcd13a3725e26ac</p>
+<p class="mono" style="font-size:6.8pt; word-break:break-all; margin:0 0 8pt 0; color:#4A544D">ae86a8d7861bb3c8460ef1286f60fb78bcab04307c88e98bc24a9b8e51c2c920</p>
 <p class="note">A impressão digital identifica de forma única o conteúdo estruturado que originou este parecer. Qualquer alteração em quantidade, preço ou fornecedor produz um hash diferente e invalida a autorização vinculada a ele.</p>
 
 <div class="divider"></div>
