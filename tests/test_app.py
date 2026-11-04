@@ -77,3 +77,17 @@ def test_app_roda_no_streamlit_sem_excecao():
     assert not teste.exception
     assert len(teste.dataframe) >= 1
     assert len(teste.metric) >= 3
+
+
+def test_serie_do_sku_retorna_none_quando_sem_historico(banco):
+    """SKU sem histórico utilizável retorna None em _serie_do_sku (plano B)."""
+    banco(
+        fornecedores=[(1, "Fornecedor", 1, 0.0)],
+        produtos=[("SKU-SEM-HIST", "Produto novo")],
+        estoque=[("SKU-SEM-HIST", 10.0, 5.0, 20.0, 1.0)],
+        cotacoes=[("SKU-SEM-HIST", 1, 5.0)],
+    )
+    dados = app.montar_dados()
+    assert dados["series"] == {}
+    assert dados["itens"] == []
+    assert dados["pendencias"] == []

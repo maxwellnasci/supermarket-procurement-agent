@@ -508,7 +508,7 @@ def gerar_analise_pre_pedido(dias_cobertura: int = 7) -> RelatorioPrePedido:
     )
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     # Teste rápido no terminal
     relatorio = gerar_analise_pre_pedido()
     print(f"\n🏬 {relatorio.loja}")

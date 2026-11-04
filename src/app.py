@@ -168,5 +168,5 @@ def main() -> None:
         st.success("Nenhuma pendência.")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()
